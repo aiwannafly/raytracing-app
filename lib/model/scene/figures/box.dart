@@ -5,9 +5,11 @@ import 'figure.dart';
 class Box extends Figure {
   List<Point3D> points = [];
 
-  Box({required Point3D minPos, required Point3D maxPos, required Point3D diffusionCoeffs,
-    required Point3D sightCoeffs, required int reflectPower})
-      : super(diffusionCoeffs: diffusionCoeffs, sightCoeffs: sightCoeffs, reflectPower: reflectPower) {
+  Box(
+      {required Point3D minPos,
+      required Point3D maxPos,
+      required Optics optics})
+      : super(optics: optics) {
     this.minPos = minPos;
     this.maxPos = maxPos;
     assert(minPos.x < maxPos.x);
@@ -21,6 +23,7 @@ class Box extends Figure {
         }
       }
     }
+    indicators.addAll(points);
     sections.addAll(split(sectionsFromPoints(points)));
   }
 

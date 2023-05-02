@@ -15,9 +15,8 @@ class Quadrangle extends Figure {
       required this.second,
       required this.third,
       required this.fourth,
-      required Point3D diffusionCoeffs,
-      required Point3D sightCoeffs, required int reflectPower})
-      : super(diffusionCoeffs: diffusionCoeffs, sightCoeffs: sightCoeffs, reflectPower: reflectPower) {
+      required Optics optics})
+      : super(optics: optics) {
     double minZ = min(first.z, min(second.z, min(third.z, fourth.z)));
     double minX = min(first.x, min(second.x, min(third.x, fourth.x)));
     double minY = min(first.y, min(second.y, min(third.y, fourth.y)));
@@ -26,6 +25,7 @@ class Quadrangle extends Figure {
     double maxY = max(first.y, max(second.y, max(third.y, fourth.y)));
     minPos = Point3D(minX, minY, minZ);
     maxPos = Point3D(maxX, maxY, maxZ);
+    indicators.addAll([first, second, third, fourth]);
     sections.addAll(split([
       Section(first, second),
       Section(second, third),

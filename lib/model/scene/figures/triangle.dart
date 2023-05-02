@@ -13,13 +13,8 @@ class Triangle extends Figure {
       {required this.first,
       required this.second,
       required this.third,
-      required Point3D diffusionCoeffs,
-      required Point3D sightCoeffs,
-      required int reflectPower})
-      : super(
-            diffusionCoeffs: diffusionCoeffs,
-            sightCoeffs: sightCoeffs,
-            reflectPower: reflectPower) {
+        required Optics optics})
+      : super(optics: optics) {
     double minZ = min(first.z, min(second.z, third.z));
     double minX = min(first.x, min(second.x, third.x));
     double minY = min(first.y, min(second.y, third.y));
@@ -28,6 +23,7 @@ class Triangle extends Figure {
     double maxY = max(first.y, max(second.y, third.y));
     minPos = Point3D(minX, minY, minZ);
     maxPos = Point3D(maxX, maxY, maxZ);
+    indicators.addAll([first, second, third]);
     sections.addAll(split([
       Section(first, second),
       Section(second, third),

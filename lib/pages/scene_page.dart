@@ -13,6 +13,7 @@ import 'package:icg_raytracing/model/scene/figures/sphere.dart';
 import 'package:icg_raytracing/model/scene/figures/triangle.dart';
 import 'package:icg_raytracing/model/scene/scene.dart';
 import 'package:icg_raytracing/painters/wire_scene_painter.dart';
+import 'package:icg_raytracing/services/scene_file_service.dart';
 
 class ScenePage extends StatefulWidget {
   const ScenePage({super.key});
@@ -20,9 +21,11 @@ class ScenePage extends StatefulWidget {
   @override
   State<ScenePage> createState() => _ScenePageState();
 
-  static double areaWidth(BuildContext context) => WidgetConfig.pageWidth(context) * .9;
-  static double areaHeight(BuildContext context) => WidgetConfig.pageHeight(context) * .8;
+  static double areaWidth(BuildContext context) =>
+      WidgetConfig.pageWidth(context) * .9;
 
+  static double areaHeight(BuildContext context) =>
+      WidgetConfig.pageHeight(context) * .8;
 }
 
 class _ScenePageState extends State<ScenePage> {
@@ -47,31 +50,24 @@ class _ScenePageState extends State<ScenePage> {
     Point3D diffusionCoeffs = Point3D(1, 1, 1);
     Point3D sightCoeffs = Point3D(1, 1, 1);
     int reflectPower = 4;
+    var optics = Optics(diff: diffusionCoeffs, sight: sightCoeffs, power: reflectPower);
     objects.add(Box(
         minPos: Point3D(1, 1, 1),
         maxPos: Point3D(10, 10, 10),
-        diffusionCoeffs: diffusionCoeffs,
-        sightCoeffs: sightCoeffs,
-        reflectPower: reflectPower));
+        optics: optics));
     objects.add(Box(
         minPos: Point3D(2, 2, 2),
         maxPos: Point3D(3, 4, 5),
-        diffusionCoeffs: diffusionCoeffs,
-        sightCoeffs: sightCoeffs,
-        reflectPower: reflectPower));
+        optics: optics));
     objects.add(Sphere(
         center: Point3D(1.5, 2, 2.5),
         radius: 1,
-        diffusionCoeffs: diffusionCoeffs,
-        sightCoeffs: sightCoeffs,
-        reflectPower: reflectPower));
+        optics: optics));
     objects.add(Triangle(
         first: Point3D(4, 4, 4),
         second: Point3D(4, 3, 3),
         third: Point3D(5, 2, 9),
-        diffusionCoeffs: diffusionCoeffs,
-        sightCoeffs: sightCoeffs,
-        reflectPower: reflectPower));
+        optics: optics));
     scene = Scene(
         objects: objects, lightSources: [], ambientColor: Point3D(1, 1, 1));
     keyboardFocusNode.requestFocus();
@@ -83,6 +79,10 @@ class _ScenePageState extends State<ScenePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    updateRenderSettings();
+  }
+
+  void updateRenderSettings() {
     renderSettings = RenderSettings.fromScene(
         scene: scene,
         quality: Quality.normal,
@@ -106,65 +106,145 @@ class _ScenePageState extends State<ScenePage> {
     setState(() {});
   }
 
+  Widget listenWrapper(BuildContext context, {required Widget child}) {
+    return Listener(
+        onPointerSignal: handleMouseWheel,
+        child: KeyboardListener(
+            focusNode: keyboardFocusNode,
+            onKeyEvent: handleKeyEvent,
+            child: child));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      onPointerSignal: handleMouseWheel,
-      child: KeyboardListener(
-        focusNode: keyboardFocusNode,
-        onKeyEvent: handleKeyEvent,
+    return listenWrapper(context,
         child: Scaffold(
-          backgroundColor: WidgetConfig.backColor,
-          body: Container(
-            padding: WidgetConfig.paddingAll,
-            alignment: Alignment.topCenter,
-            // decoration: const BoxDecoration(
-            //   image: DecorationImage(image: AssetImage("assets/space.jpeg")
-            //   )
-            // ),
-            child: Container(
-                height: ScenePage.areaHeight(context),
-                width: ScenePage.areaWidth(context),
-                // padding: WidgetConfig.paddingAll,
-                decoration: BoxDecoration(
-                    color: const Color(0xFF08112D),
-                    borderRadius: WidgetConfig.borderRadius,
-                    border: Border.all(color: Colors.black, width: 1)),
-                child: MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onPanDown: onPressed,
-                      onPanUpdate: onDragged,
-                      child: ClipRRect(
-                          child: FittedBox(
-                              child: Stack(
-                                children: [
-                                  // GridPaper(
-                                  //   color: Colors.blue.shade100.withOpacity(.5),
-                                  //   divisions: 1,
-                                  //   interval: ScenePage.areaWidth(context) * .4,
-                                  //   subdivisions: 6,
-                                  //   child: SizedBox(                height: ScenePage.areaHeight(context),
-                                  //     width: ScenePage.areaWidth(context),),
-                                  // ),
-                                  CustomPaint(
-                                    size: Size(ScenePage.areaWidth(context), ScenePage.areaHeight(context)),
-                                    painter: WireScenePainter(
-                                        sections: SceneAlgorithms().applyCamViewMatrix(
+            backgroundColor: WidgetConfig.backColor,
+            body: Container(
+              padding: WidgetConfig.paddingAll,
+              alignment: Alignment.topCenter,
+              child: Column(
+                children: [
+                  Container(
+                      height: ScenePage.areaHeight(context),
+                      width: ScenePage.areaWidth(context),
+                      // padding: WidgetConfig.paddingAll,
+                      decoration: const BoxDecoration(
+                          color: Colors.white,// const Color(0xFF08112D),
+                          borderRadius: WidgetConfig.borderRadius,
+                          // border: Border.all(color: Colors.black, width: 1)
+                      ),
+                      child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onPanDown: onPressed,
+                            onPanUpdate: onDragged,
+                            child: ClipRRect(
+                                child: FittedBox(
+                              child: CustomPaint(
+                                size: Size(ScenePage.areaWidth(context),
+                                    ScenePage.areaHeight(context)),
+                                painter: WireScenePainter(
+                                    sections: SceneAlgorithms()
+                                        .applyCamViewMatrix(
                                             scene: scene,
-                                            sceneHeight: ScenePage.areaHeight(context),
-                                            sceneWidth: ScenePage.areaWidth(context),
-                                            s: renderSettings,
+                                            sceneHeight:
+                                                ScenePage.areaHeight(context),
+                                            sceneWidth:
+                                                ScenePage.areaWidth(context),
+                                            settings: renderSettings,
                                             yRotAngle: zRotAngle.value,
                                             zRotAngle: yRotAngle.value)),
-                                  ),
-                                ],
-                              ))),
-                    ))),
+                              ),
+                            )),
+                          ))),
+                  Container(
+                    padding: WidgetConfig.paddingAll,
+                    width: ScenePage.areaWidth(context),
+                    child: Row(
+                      children: [
+                        buildButton(context,
+                            onTap: openScene,
+                            text: "Open scene",
+                            iconData: Icons.open_in_browser),
+                        const SizedBox(width: WidgetConfig.padding,),
+                        buildButton(context,
+                            onTap: init,
+                            text: "Init",
+                            iconColor: Colors.red,
+                            iconData: Icons.restart_alt),
+                        const SizedBox(width: WidgetConfig.padding,),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            )));
+  }
+
+  void openScene() async {
+    Scene? res = await SceneFileService().openSceneFile();
+    if (res == null) {
+      return;
+    }
+    scene = res;
+    setState(() {
+      updateRenderSettings();
+    });
+  }
+
+  void init() {
+    updateRenderSettings();
+    yRotAngle.value = 0;
+    zRotAngle.value = 0;
+  }
+
+  Widget buildButton(BuildContext context,
+      {required String text,
+      required IconData iconData,
+      required VoidCallback onTap,
+      Color iconColor = WidgetConfig.seedColor}) {
+    return ElevatedButton(
+        onPressed: onTap,
+        style: ButtonStyle(
+          foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+          backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
+          overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                (Set<MaterialState> states) {
+              if (states.contains(MaterialState.hovered)) {
+                return WidgetConfig.seedColor.withOpacity(0.04);
+              }
+              if (states.contains(MaterialState.focused) ||
+                  states.contains(MaterialState.pressed)) {
+                return WidgetConfig.seedColor.withOpacity(0.12);
+              }
+              return null; // Defer to the widget's default.
+            },
           ),
         ),
-      ),
-    );
+        child: Container(
+          width: 150,
+          alignment: Alignment.center,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  iconData,
+                  color: iconColor,
+                ),
+                const SizedBox(
+                  width: WidgetConfig.padding / 2,
+                ),
+                WidgetConfig.defaultText(text),
+                const SizedBox(
+                  width: WidgetConfig.padding * 2.3,
+                ),
+              ],
+            ),
+          ),
+        ));
   }
 
   void updateZNear() {

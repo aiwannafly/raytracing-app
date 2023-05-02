@@ -1,14 +1,21 @@
 import 'package:icg_raytracing/algorithms/types.dart';
 
+class Optics {
+  Point3D diff;
+  Point3D sight;
+  int power;
+
+  Optics({required this.diff, required this.sight, required this.power});
+}
+
 abstract class Figure {
-  final Point3D diffusionCoeffs;
-  final Point3D sightCoeffs;
-  final int reflectPower;
+  final Optics optics;
   final List<Section> sections = [];
+  final List<Point3D> indicators = [];
   late Point3D minPos;
   late Point3D maxPos;
 
-  Figure({required this.diffusionCoeffs, required this.sightCoeffs, required this.reflectPower});
+  Figure({required this.optics});
 
   List<Section> split(List<Section> baseSections, [double stride = 20]) {
     List<Section> sections = [];

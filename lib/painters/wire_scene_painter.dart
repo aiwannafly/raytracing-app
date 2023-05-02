@@ -9,13 +9,14 @@ class WireScenePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     var linePaint = Paint()
-      ..color = Colors.orange
+      ..color = Colors.black87
       ..isAntiAlias=true
       ..strokeWidth = 1;
     for (Section s in sections) {
       canvas.drawLine(
           Offset(s.start.x, s.start.y), Offset(s.end.x, s.end.y), linePaint);
     }
+
   }
 
   @override

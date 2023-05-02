@@ -76,10 +76,7 @@ class RenderSettings {
       maxPos.y = max(maxPos.y, object.maxPos.y);
       maxPos.z = max(maxPos.z, object.maxPos.z);
     }
-    print('at render init start: ${minPos.toString()} ${maxPos.toString()}');
     overallSizes = (maxPos - minPos) * (1 + overallBoxExpand);
-    // print('sizes: $overallSizes');
-    // shifting center to (0, 0, 0) ...
     Point3D shift = (minPos + maxPos) / 2;
     for (Figure figure in scene.objects) {
       figure.maxPos -= shift;
@@ -105,8 +102,6 @@ class RenderSettings {
     zFar = maxPos.x - eye.x + overallSizes.x / 2;
     planeHeight = max(overallSizes.y, overallSizes.x * (desiredHeight) / desiredWidth);
     planeWidth = planeHeight * (desiredWidth / desiredHeight);
-    print('view: $view, eye: $eye');
-    // print('[] $planeWidth $planeHeight');
     for (Figure object in scene.objects) {
       minPos.x = min(minPos.x, object.minPos.x);
       minPos.y = min(minPos.y, object.minPos.y);
@@ -115,6 +110,5 @@ class RenderSettings {
       maxPos.y = max(maxPos.y, object.maxPos.y);
       maxPos.z = max(maxPos.z, object.maxPos.z);
     }
-    print('at render init end: ${minPos.toString()} ${maxPos.toString()}');
   }
 }
