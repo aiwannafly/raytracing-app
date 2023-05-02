@@ -7,8 +7,9 @@ class WidgetConfig {
   static const menuColor = Color(0xFFF5EDEB);
   static const backIconColor = Color(0xFFfff5f2);
   static const hoverColor = Color(0xFFACC2CB);
-  static const seedColor = Colors.red;
-  static const primaryColor = Colors.redAccent;
+  static const seedColor = Colors.blue;
+  static const backColor = Color(0xFF070824);
+  static const primaryColor = Colors.blueAccent;
   static const padding = 10.0;
   static const iconSize = 25.0;
   static const paddingAll = EdgeInsets.all(padding);

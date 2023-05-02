@@ -27,8 +27,8 @@ class Sphere extends Figure {
       List<Point3D> points = [];
       for (int j = 0; j < stride; j++) {
         double angle = step * j;
-        double z = radius * cos(angle) * sin(angleZ);
-        double x = radius * sin(angle) * sin(angleZ);
+        double x = radius * cos(angle) * sin(angleZ);
+        double z = radius * sin(angle) * sin(angleZ);
         points.add(center + Point3D(x, y, z));
       }
       for (int i = 0; i < points.length; i++) {

@@ -21,6 +21,8 @@ class RenderSettings {
   late double zFar;
   late double planeWidth;
   late double planeHeight;
+  late Point3D overallSizes;
+
   static const overallBoxExpand = 0.05;
 
   static const minZNear = .8;
@@ -75,7 +77,7 @@ class RenderSettings {
       maxPos.z = max(maxPos.z, object.maxPos.z);
     }
     print('at render init start: ${minPos.toString()} ${maxPos.toString()}');
-    Point3D overallSizes = (maxPos - minPos) * (1 + overallBoxExpand);
+    overallSizes = (maxPos - minPos) * (1 + overallBoxExpand);
     // print('sizes: $overallSizes');
     // shifting center to (0, 0, 0) ...
     Point3D shift = (minPos + maxPos) / 2;

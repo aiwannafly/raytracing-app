@@ -19,13 +19,17 @@ class ScenePage extends StatefulWidget {
 
   @override
   State<ScenePage> createState() => _ScenePageState();
+
+  static double areaWidth(BuildContext context) => WidgetConfig.pageWidth(context) * .9;
+  static double areaHeight(BuildContext context) => WidgetConfig.pageHeight(context) * .8;
+
 }
 
 class _ScenePageState extends State<ScenePage> {
   late Scene scene;
   late RenderSettings renderSettings;
   final zNearScale = ValueNotifier(1.0);
-  late final double zNear;
+  late double zNear;
   final keyboardFocusNode = FocusNode();
   DateTime lastCTRLPressed = DateTime.now();
   int prevZ = 0;
@@ -70,19 +74,24 @@ class _ScenePageState extends State<ScenePage> {
         reflectPower: reflectPower));
     scene = Scene(
         objects: objects, lightSources: [], ambientColor: Point3D(1, 1, 1));
+    keyboardFocusNode.requestFocus();
+    zNearScale.addListener(updateZNear);
+    yRotAngle.addListener(updateView);
+    zRotAngle.addListener(updateView);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     renderSettings = RenderSettings.fromScene(
         scene: scene,
         quality: Quality.normal,
         tracingDepth: 3,
         backgroundColor: Point3D(1, 1, 1),
         gamma: 1,
-        desiredWidth: 1000,
-        desiredHeight: 800);
+        desiredWidth: ScenePage.areaWidth(context),
+        desiredHeight: ScenePage.areaHeight(context));
     zNear = renderSettings.zNear;
-    zNearScale.addListener(updateZNear);
-    keyboardFocusNode.requestFocus();
-    yRotAngle.addListener(updateView);
-    zRotAngle.addListener(updateView);
   }
 
   @override
@@ -105,7 +114,7 @@ class _ScenePageState extends State<ScenePage> {
         focusNode: keyboardFocusNode,
         onKeyEvent: handleKeyEvent,
         child: Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: WidgetConfig.backColor,
           body: Container(
             padding: WidgetConfig.paddingAll,
             alignment: Alignment.topCenter,
@@ -114,10 +123,11 @@ class _ScenePageState extends State<ScenePage> {
             //   )
             // ),
             child: Container(
-                height: 800,
-                width: 1000,
-                padding: WidgetConfig.paddingAll,
+                height: ScenePage.areaHeight(context),
+                width: ScenePage.areaWidth(context),
+                // padding: WidgetConfig.paddingAll,
                 decoration: BoxDecoration(
+                    color: const Color(0xFF08112D),
                     borderRadius: WidgetConfig.borderRadius,
                     border: Border.all(color: Colors.black, width: 1)),
                 child: MouseRegion(
@@ -127,15 +137,29 @@ class _ScenePageState extends State<ScenePage> {
                       onPanUpdate: onDragged,
                       child: ClipRRect(
                           child: FittedBox(
-                              child: CustomPaint(
-                        size: const Size(1000, 800),
-                        painter: WireScenePainter(
-                            sections: SceneAlgorithms().applyCamViewMatrix(
-                                scene: scene,
-                                settings: renderSettings,
-                                yRotAngle: zRotAngle.value,
-                                zRotAngle: yRotAngle.value)),
-                      ))),
+                              child: Stack(
+                                children: [
+                                  // GridPaper(
+                                  //   color: Colors.blue.shade100.withOpacity(.5),
+                                  //   divisions: 1,
+                                  //   interval: ScenePage.areaWidth(context) * .4,
+                                  //   subdivisions: 6,
+                                  //   child: SizedBox(                height: ScenePage.areaHeight(context),
+                                  //     width: ScenePage.areaWidth(context),),
+                                  // ),
+                                  CustomPaint(
+                                    size: Size(ScenePage.areaWidth(context), ScenePage.areaHeight(context)),
+                                    painter: WireScenePainter(
+                                        sections: SceneAlgorithms().applyCamViewMatrix(
+                                            scene: scene,
+                                            sceneHeight: ScenePage.areaHeight(context),
+                                            sceneWidth: ScenePage.areaWidth(context),
+                                            s: renderSettings,
+                                            yRotAngle: zRotAngle.value,
+                                            zRotAngle: yRotAngle.value)),
+                                  ),
+                                ],
+                              ))),
                     ))),
           ),
         ),
@@ -211,7 +235,6 @@ class _ScenePageState extends State<ScenePage> {
     if (prevZ.abs() > 90) {
       sign *= -1;
     }
-    print(sign);
     int delimiter = 6;
     int dx = sign * details.localPosition.dy.round() ~/ delimiter;
     int dy = -details.localPosition.dx.round() ~/ delimiter;

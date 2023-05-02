@@ -37,36 +37,40 @@ class SceneAlgorithms {
    */
   List<Section> applyCamViewMatrix(
       {required Scene scene,
-      required RenderSettings settings,
+      required RenderSettings s,
       int zRotAngle = 0,
-      int yRotAngle = 0}) {
+      int yRotAngle = 0,
+      required double sceneWidth,
+      required double sceneHeight}) {
+    s.planeHeight = max(s.overallSizes.y, s.overallSizes.x * (sceneHeight) / sceneWidth);
+    s.planeWidth = s.planeHeight * (sceneWidth / sceneHeight);
     List<Section> result = [];
-    double w = 500;
-    double h = 400;
+    double w = sceneWidth / 2;
+    double h = sceneHeight / 2;
     Matrix transformMatrix =
         Transform3D().getScaleMatrix(scaleX: w, scaleY: h, scaleZ: 1) *
             Transform3D().getTranslationMatrix(trX: 1, trY: 1, trZ: 0) *
             Transform3D().getVisibleAreaMatrix(
-                zNear: settings.zNear,
-                zFar: settings.zFar,
-                sWidth: settings.planeWidth,
-                sHeight: settings.planeHeight) *
+                zNear: s.zNear,
+                zFar: s.zFar,
+                sWidth: s.planeWidth,
+                sHeight: s.planeHeight) *
             Transform3D().getCameraMatrix(
-                eye: settings.eye, view: settings.view, up: settings.up);
+                eye: s.eye, view: s.view, up: s.up);
     Matrix rotMatrix =
     Transform3D().getRotationMatrixZ(zRotAngle * pi / 180) *
         Transform3D().getRotationMatrixY(yRotAngle * pi / 180);
-    Point3D dir = settings.eye - settings.view;
+    Point3D dir = s.eye - s.view;
     for (Figure object in scene.objects) {
-      for (Section s in object.sections) {
+      for (Section section in object.sections) {
         Section rotated = Section(
-            Transform3D().applyMatrix(s.start, rotMatrix),
-            Transform3D().applyMatrix(s.end, rotMatrix));
-        Point3D sDir = settings.eye - rotated.start;
+            Transform3D().applyMatrix(section.start, rotMatrix),
+            Transform3D().applyMatrix(section.end, rotMatrix));
+        Point3D sDir = s.eye - rotated.start;
         if (sDir.scalarDot(dir) < 0) {
           continue;
         }
-        sDir = settings.eye - rotated.end;
+        sDir = s.eye - rotated.end;
         if (sDir.scalarDot(dir) < 0) {
           continue;
         }
