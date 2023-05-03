@@ -32,14 +32,14 @@ class SceneAlgorithms {
     double w = sceneWidth / 2;
     double h = sceneHeight / 2;
     Matrix transformMatrix =
-        Transform3D().getScaleMatrix(scaleX: w, scaleY: h, scaleZ: 1) *
-            Transform3D().getTranslationMatrix(trX: 1, trY: 1, trZ: 0) *
-            Transform3D().getVisibleAreaMatrix(
+        T3D().getScaleMatrix(scaleX: w, scaleY: h, scaleZ: 1) *
+            T3D().getTranslationMatrix(trX: 1, trY: 1, trZ: 0) *
+            T3D().getVisibleAreaMatrix(
                 zNear: settings.zNear,
                 zFar: settings.zFar,
                 sWidth: settings.planeWidth,
                 sHeight: settings.planeHeight) *
-            Transform3D().getCameraMatrix(
+            T3D().getCamMatrix(
                 eye: settings.eye, view: settings.view, up: settings.up);
     // Matrix rotMatrix =
     //     Transform3D().getRotationMatrixZ((zRotAngle + 1) * pi / 180) *
@@ -49,8 +49,8 @@ class SceneAlgorithms {
     for (Figure object in scene.figures) {
       for (Section section in object.sections) {
         Section rotated = Section(
-            Transform3D().applyMatrix(section.start, rotMatrix),
-            Transform3D().applyMatrix(section.end, rotMatrix));
+            T3D().apply(section.start, rotMatrix),
+            T3D().apply(section.end, rotMatrix));
         Point3D sDir = settings.eye - rotated.start;
         if (sDir.scalarDot(dir) <= 0) {
           continue;
@@ -60,8 +60,8 @@ class SceneAlgorithms {
           continue;
         }
         Section transformed = Section(
-            Transform3D().applyMatrix(rotated.start, transformMatrix),
-            Transform3D().applyMatrix(rotated.end, transformMatrix));
+            T3D().apply(rotated.start, transformMatrix),
+            T3D().apply(rotated.end, transformMatrix));
         result.add(transformed);
       }
     }
@@ -82,21 +82,21 @@ class SceneAlgorithms {
     double w = sceneWidth / 2;
     double h = sceneHeight / 2;
     Matrix transformMatrix =
-        Transform3D().getScaleMatrix(scaleX: w, scaleY: h, scaleZ: 1) *
-            Transform3D().getTranslationMatrix(trX: 1, trY: 1, trZ: 0) *
-            Transform3D().getVisibleAreaMatrix(
+        T3D().getScaleMatrix(scaleX: w, scaleY: h, scaleZ: 1) *
+            T3D().getTranslationMatrix(trX: 1, trY: 1, trZ: 0) *
+            T3D().getVisibleAreaMatrix(
                 zNear: settings.zNear,
                 zFar: settings.zFar,
                 sWidth: settings.planeWidth,
                 sHeight: settings.planeHeight) *
-            Transform3D().getCameraMatrix(
+            T3D().getCamMatrix(
                 eye: settings.eye, view: settings.view, up: settings.up) *
-            Transform3D().getRotationMatrixZ((zRotAngle + 1) * pi / 180) *
-            Transform3D().getRotationMatrixY(yRotAngle * pi / 180);
+            T3D().getRotationMatrixZ((zRotAngle + 1) * pi / 180) *
+            T3D().getRotationMatrixY(yRotAngle * pi / 180);
     Matrix invMatrix = transformMatrix.inverse();
     List<Point3D> res = [];
     for (Point3D p in points) {
-      res.add(Transform3D().applyMatrix(p, invMatrix));
+      res.add(T3D().apply(p, invMatrix));
     }
     return res;
   }

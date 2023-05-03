@@ -128,39 +128,36 @@ class _ScenePageState extends State<ScenePage> {
               child: Column(
                 children: [
                   Container(
-                      height: ScenePage.areaHeight(context),
-                      width: ScenePage.areaWidth(context),
-                      // padding: WidgetConfig.paddingAll,
+                      height: height,
+                      width: width,
                       decoration: const BoxDecoration(
                         color: Colors.white, // const Color(0xFF08112D),
                         borderRadius: WidgetConfig.borderRadius,
                         // border: Border.all(color: Colors.black, width: 1)
                       ),
-                      child: image != null ? Image.memory(image!.bytes) : MouseRegion(
-                          cursor: SystemMouseCursors.click,
-                          child: GestureDetector(
-                            onPanDown: onPressed,
-                            onPanUpdate: onDragged,
-                            child: ClipRRect(
-                                child: FittedBox(
-                              child: CustomPaint(
-                                size: Size(ScenePage.areaWidth(context),
-                                    ScenePage.areaHeight(context)),
-                                painter: WireScenePainter(
-                                    sections: SceneAlgorithms()
-                                        .applyCamViewMatrix(
-                                            scene: scene,
-                                            sceneHeight:
-                                                ScenePage.areaHeight(context),
-                                            sceneWidth:
-                                                ScenePage.areaWidth(context),
-                                            settings: settings,
-                                            yRotAngle: zRotAngle.value,
-                                            zRotAngle: yRotAngle.value)),
-                              ),
-                            )),
-                          ))
-                  ),
+                      child: image != null
+                          ? Image.memory(image!.bytes)
+                          : MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onPanDown: onPressed,
+                                onPanUpdate: onDragged,
+                                child: ClipRRect(
+                                    child: FittedBox(
+                                  child: CustomPaint(
+                                    size: Size(width, height),
+                                    painter: WireScenePainter(
+                                        sections: SceneAlgorithms()
+                                            .applyCamViewMatrix(
+                                                scene: scene,
+                                                sceneHeight: height,
+                                                sceneWidth: width,
+                                                settings: settings,
+                                                yRotAngle: zRotAngle.value,
+                                                zRotAngle: yRotAngle.value)),
+                                  ),
+                                )),
+                              ))),
                   Container(
                     padding: WidgetConfig.paddingAll,
                     width: ScenePage.areaWidth(context),
@@ -185,7 +182,15 @@ class _ScenePageState extends State<ScenePage> {
                             onTap: render,
                             text: "Render",
                             iconColor: Colors.red,
-                            iconData: Icons.rectangle_outlined),
+                            iconData: Icons.sunny),
+                        const SizedBox(
+                          width: WidgetConfig.padding,
+                        ),
+                        buildButton(context,
+                            onTap: selectView,
+                            text: "Select view",
+                            iconColor: Colors.purple,
+                            iconData: Icons.remove_red_eye_outlined),
                         const SizedBox(
                           width: WidgetConfig.padding,
                         ),
@@ -220,8 +225,12 @@ class _ScenePageState extends State<ScenePage> {
   void render() {
     image = RenderAlgorithms().renderScene(
         scene: scene, settings: settings, width: width, height: height);
-    setState(() {
+    setState(() {});
+  }
 
+  void selectView() {
+    setState(() {
+      image = null;
     });
   }
 

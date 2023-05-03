@@ -36,6 +36,9 @@ class BMPImage {
   BMPImage({required int width, required int height}) {
     assert(width > 0);
     assert(height > 0);
+    while (width % 4 != 0) {
+      width++;
+    }
     int fileSize = BMP._defaultBytes.length + (width * height) * 3;
     bytes = Uint8List(fileSize);
     for (int i = 0; i < BMP._defaultBytes.length; i++) {

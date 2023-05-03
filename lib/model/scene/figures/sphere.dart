@@ -76,6 +76,12 @@ class Sphere extends Figure {
   }
 
   @override
+  void shift(Point3D delta) {
+    super.shift(delta);
+    center -= delta;
+  }
+
+  @override
   Point3D? intersect({required Point3D rayStart, required Point3D rayDir}) {
     var oc = center - rayStart;
     double oc2 = oc.scalarDot(oc);
@@ -95,5 +101,16 @@ class Sphere extends Figure {
       t = t1 - sqrt(t2);
     }
     return rayStart + rayDir * t;
+  }
+
+  @override
+  Point3D? intersectNormal({required Point3D rayStart, required Point3D rayDir}) {
+    Point3D? int = intersect(rayStart: rayStart, rayDir: rayDir);
+    if (int == null) {
+      return null;
+    }
+    var n = int - center;
+    n /= radius;
+    return n;
   }
 }

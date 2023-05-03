@@ -79,15 +79,10 @@ class RenderSettings {
     overallSizes = (maxPos - minPos) * (1 + overallBoxExpand);
     Point3D shift = (minPos + maxPos) / 2;
     for (Figure figure in scene.figures) {
-      figure.maxPos -= shift;
-      figure.minPos -= shift;
+      figure.shift(shift);
       minPos.x = min(minPos.x, figure.minPos.x);
       minPos.y = min(minPos.y, figure.minPos.y);
       minPos.z = min(minPos.z, figure.minPos.z);
-      for (Section section in figure.sections) {
-        section.start -= shift;
-        section.end -= shift;
-      }
     }
     maxPos = -minPos;
     for (LightSource l in scene.lightSources) {

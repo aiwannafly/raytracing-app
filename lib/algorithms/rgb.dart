@@ -11,6 +11,15 @@ class RGBDouble {
     return rgb;
   }
 
+  RGBDouble operator +(RGBDouble o) {
+    return RGBDouble(red + o.red, green + o.green, blue + o.blue);
+  }
+
+  RGBDouble operator *(double a) {
+    return RGBDouble(red * a, green * a, blue * a);
+  }
+
+
   RGBDouble mulScalar(num scalar) {
     return RGBDouble(red * scalar, green * scalar, blue * scalar);
   }
@@ -32,11 +41,18 @@ class RGBDouble {
 }
 
 class RGB {
-  int red;
-  int blue;
-  int green;
+  late int red;
+  late int blue;
+  late int green;
 
   RGB(this.red, this.green, this.blue);
+
+  RGB.mono(int value) {
+    red = value;
+    blue = value;
+    green = value;
+    normalize();
+  }
 
   RGBDouble toRGBDouble() {
     return RGBDouble(red.toDouble(), green.toDouble(), blue.toDouble());

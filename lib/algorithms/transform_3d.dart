@@ -4,11 +4,11 @@ import 'package:icg_raytracing/algorithms/types.dart';
 import 'package:ml_linalg/matrix.dart';
 import 'package:ml_linalg/vector.dart';
 
-class Transform3D {
-  Transform3D._internal();
+class T3D {
+  T3D._internal();
 
-  factory Transform3D() {
-    return Transform3D._internal();
+  factory T3D() {
+    return T3D._internal();
   }
 
   Matrix getScaleMatrix(
@@ -66,7 +66,7 @@ class Transform3D {
     ]);
   }
 
-  Point3D applyMatrix(Point3D p, Matrix m) {
+  Point3D apply(Point3D p, Matrix m) {
     Vector expanded = Vector.fromList([p.x, p.y, p.z, 1]);
     expanded = (m * expanded).columns.first;
     if (expanded.last != 1 && expanded.last != 0) {
@@ -90,10 +90,9 @@ class Transform3D {
     ]);
   }
 
-  Matrix getCameraMatrix(
+  Matrix getCamMatrix(
       {required Point3D eye, required Point3D view, required Point3D up}) {
     Point3D dir = eye - view;
-    // print('dir: $dir');
     Point3D k = dir / dir.norm();
     Point3D I = up.vectorMul(k);
     Point3D i = I / I.norm();
@@ -105,6 +104,20 @@ class Transform3D {
       [k.x, k.y, k.z, 0],
       [0, 0, 0, 1]
     ]) * getTranslationMatrix(trX: -eye.x, trY: -eye.y, trZ: -eye.z);
-    // return getTranslationMatrix(trX: -eye.x, trY: -eye.y, trZ: -eye.z);
+  }
+
+  Matrix getInvCamMatrix(
+      {required Point3D eye, required Point3D view, required Point3D up}) {
+    Point3D dir = eye - view;
+    Point3D k = dir / dir.norm();
+    Point3D I = up.vectorMul(k);
+    Point3D i = I / I.norm();
+    Point3D j = k.vectorMul(i);
+    return getTranslationMatrix(trX: eye.x, trY: eye.y, trZ: eye.z) * Matrix.fromList([
+      [i.x, j.x, k.x, 0],
+      [i.y, j.y, k.y, 0],
+      [i.z, j.z, k.z, 0],
+      [0, 0, 0, 1]
+    ]);
   }
 }
