@@ -30,4 +30,9 @@ class Triangle extends Figure {
       Section(third, first),
     ]));
   }
+
+  @override
+  Point3D? intersect({required Point3D rayStart, required Point3D rayDir}) {
+    return null;
+  }
 }

@@ -93,7 +93,7 @@ class SceneFileService {
       }
     }
     return Scene(
-        objects: figures,
+        figures: figures,
         lightSources: lightSources,
         ambientColor: ambientColor);
   }

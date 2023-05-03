@@ -4,9 +4,9 @@ import 'figures/figure.dart';
 import 'light_source.dart';
 
 class Scene {
-  final List<Figure> objects;
+  final List<Figure> figures;
   final List<LightSource> lightSources;
   final Point3D ambientColor;
 
-  Scene({required this.objects, required this.lightSources, required this.ambientColor});
+  Scene({required this.figures, required this.lightSources, required this.ambientColor});
 }

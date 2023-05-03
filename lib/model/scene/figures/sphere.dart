@@ -6,12 +6,14 @@ import 'figure.dart';
 class Sphere extends Figure {
   Point3D center;
   double radius;
+  late double radius2;
 
   Sphere(
       {required this.center,
       required this.radius,
         required Optics optics})
       : super(optics: optics) {
+    radius2 = radius * radius;
     minPos = Point3D(center.x - radius, center.y - radius, center.z - radius);
     maxPos = Point3D(center.x + radius, center.y + radius, center.z + radius);
     const int stride = 15;
@@ -71,5 +73,27 @@ class Sphere extends Figure {
         sections.add(Section(points[k], points[next]));
       }
     }
+  }
+
+  @override
+  Point3D? intersect({required Point3D rayStart, required Point3D rayDir}) {
+    var oc = center - rayStart;
+    double oc2 = oc.scalarDot(oc);
+    bool inside = oc2 <= radius2;
+    double t1 = oc.scalarDot(rayDir);
+    if (!inside && t1 < 0) {
+      return null;
+    }
+    double t2 = radius2 - oc2 + t1 * t1;
+    if (t2 < 0) {
+      return null;
+    }
+    double t = 0;
+    if (inside) {
+      t = t1 + sqrt(t2);
+    } else {
+      t = t1 - sqrt(t2);
+    }
+    return rayStart + rayDir * t;
   }
 }

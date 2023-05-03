@@ -17,6 +17,8 @@ abstract class Figure {
 
   Figure({required this.optics});
 
+  Point3D? intersect({required Point3D rayStart, required Point3D rayDir});
+
   List<Section> split(List<Section> baseSections, [double stride = 20]) {
     List<Section> sections = [];
     for (Section base in baseSections) {

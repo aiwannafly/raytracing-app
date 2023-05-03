@@ -25,6 +25,7 @@ class Box extends Figure {
     }
     indicators.addAll(points);
     sections.addAll(split(sectionsFromPoints(points)));
+    // sections.addAll(sectionsFromPoints(points));
   }
 
   List<Section> sectionsFromPoints(List<Point3D> points) {
@@ -42,5 +43,10 @@ class Box extends Figure {
       result.add(Section(firstPart[i], secondPart[i]));
     }
     return result;
+  }
+
+  @override
+  Point3D? intersect({required Point3D rayStart, required Point3D rayDir}) {
+    return null;
   }
 }

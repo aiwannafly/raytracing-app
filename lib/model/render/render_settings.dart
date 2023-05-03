@@ -63,12 +63,12 @@ class RenderSettings {
       required this.gamma,
       required double desiredWidth,
       required double desiredHeight}) {
-    if (scene.objects.isEmpty) {
+    if (scene.figures.isEmpty) {
       throw 'scene.objects must not be empty';
     }
-    Point3D minPos = scene.objects.first.minPos;
-    Point3D maxPos = scene.objects.first.maxPos;
-    for (Figure object in scene.objects) {
+    Point3D minPos = scene.figures.first.minPos;
+    Point3D maxPos = scene.figures.first.maxPos;
+    for (Figure object in scene.figures) {
       minPos.x = min(minPos.x, object.minPos.x);
       minPos.y = min(minPos.y, object.minPos.y);
       minPos.z = min(minPos.z, object.minPos.z);
@@ -78,7 +78,7 @@ class RenderSettings {
     }
     overallSizes = (maxPos - minPos) * (1 + overallBoxExpand);
     Point3D shift = (minPos + maxPos) / 2;
-    for (Figure figure in scene.objects) {
+    for (Figure figure in scene.figures) {
       figure.maxPos -= shift;
       figure.minPos -= shift;
       minPos.x = min(minPos.x, figure.minPos.x);
@@ -102,7 +102,7 @@ class RenderSettings {
     zFar = maxPos.x - eye.x + overallSizes.x / 2;
     planeHeight = max(overallSizes.y, overallSizes.x * (desiredHeight) / desiredWidth);
     planeWidth = planeHeight * (desiredWidth / desiredHeight);
-    for (Figure object in scene.objects) {
+    for (Figure object in scene.figures) {
       minPos.x = min(minPos.x, object.minPos.x);
       minPos.y = min(minPos.y, object.minPos.y);
       minPos.z = min(minPos.z, object.minPos.z);

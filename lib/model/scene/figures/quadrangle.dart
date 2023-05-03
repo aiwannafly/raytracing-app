@@ -33,4 +33,9 @@ class Quadrangle extends Figure {
       Section(fourth, first)
     ]));
   }
+
+  @override
+  Point3D? intersect({required Point3D rayStart, required Point3D rayDir}) {
+    return null;
+  }
 }

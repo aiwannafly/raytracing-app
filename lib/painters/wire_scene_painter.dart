@@ -15,8 +15,8 @@ class WireScenePainter extends CustomPainter {
     for (Section s in sections) {
       canvas.drawLine(
           Offset(s.start.x, s.start.y), Offset(s.end.x, s.end.y), linePaint);
+      // print(s);
     }
-
   }
 
   @override

@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:icg_raytracing/algorithms/bmp.dart';
+import 'package:icg_raytracing/algorithms/render_algorithms.dart';
 import 'package:icg_raytracing/algorithms/scene_algorithms.dart';
 import 'package:icg_raytracing/algorithms/types.dart';
 import 'package:icg_raytracing/config/widget_config.dart';
@@ -30,7 +32,7 @@ class ScenePage extends StatefulWidget {
 
 class _ScenePageState extends State<ScenePage> {
   late Scene scene;
-  late RenderSettings renderSettings;
+  late RenderSettings settings;
   final zNearScale = ValueNotifier(1.0);
   late double zNear;
   final keyboardFocusNode = FocusNode();
@@ -42,6 +44,7 @@ class _ScenePageState extends State<ScenePage> {
   bool dragJustStarted = false;
   static final zRotAngle = ValueNotifier(0);
   static final yRotAngle = ValueNotifier(0);
+  BMPImage? image;
 
   @override
   void initState() {
@@ -50,26 +53,21 @@ class _ScenePageState extends State<ScenePage> {
     Point3D diffusionCoeffs = Point3D(1, 1, 1);
     Point3D sightCoeffs = Point3D(1, 1, 1);
     int reflectPower = 4;
-    var optics = Optics(diff: diffusionCoeffs, sight: sightCoeffs, power: reflectPower);
+    var optics =
+        Optics(diff: diffusionCoeffs, sight: sightCoeffs, power: reflectPower);
     objects.add(Box(
-        minPos: Point3D(1, 1, 1),
-        maxPos: Point3D(10, 10, 10),
-        optics: optics));
+        minPos: Point3D(1, 1, 1), maxPos: Point3D(10, 10, 10), optics: optics));
     objects.add(Box(
-        minPos: Point3D(2, 2, 2),
-        maxPos: Point3D(3, 4, 5),
-        optics: optics));
-    objects.add(Sphere(
-        center: Point3D(1.5, 2, 2.5),
-        radius: 1,
-        optics: optics));
+        minPos: Point3D(2, 2, 2), maxPos: Point3D(3, 4, 5), optics: optics));
+    objects
+        .add(Sphere(center: Point3D(1.5, 2, 2.5), radius: 1, optics: optics));
     objects.add(Triangle(
         first: Point3D(4, 4, 4),
         second: Point3D(4, 3, 3),
         third: Point3D(5, 2, 9),
         optics: optics));
     scene = Scene(
-        objects: objects, lightSources: [], ambientColor: Point3D(1, 1, 1));
+        figures: objects, lightSources: [], ambientColor: Point3D(1, 1, 1));
     keyboardFocusNode.requestFocus();
     zNearScale.addListener(updateZNear);
     yRotAngle.addListener(updateView);
@@ -83,7 +81,7 @@ class _ScenePageState extends State<ScenePage> {
   }
 
   void updateRenderSettings() {
-    renderSettings = RenderSettings.fromScene(
+    settings = RenderSettings.fromScene(
         scene: scene,
         quality: Quality.normal,
         tracingDepth: 3,
@@ -91,7 +89,7 @@ class _ScenePageState extends State<ScenePage> {
         gamma: 1,
         desiredWidth: ScenePage.areaWidth(context),
         desiredHeight: ScenePage.areaHeight(context));
-    zNear = renderSettings.zNear;
+    zNear = settings.zNear;
   }
 
   @override
@@ -115,6 +113,10 @@ class _ScenePageState extends State<ScenePage> {
             child: child));
   }
 
+  double get width => ScenePage.areaWidth(context);
+
+  double get height => ScenePage.areaHeight(context);
+
   @override
   Widget build(BuildContext context) {
     return listenWrapper(context,
@@ -130,11 +132,11 @@ class _ScenePageState extends State<ScenePage> {
                       width: ScenePage.areaWidth(context),
                       // padding: WidgetConfig.paddingAll,
                       decoration: const BoxDecoration(
-                          color: Colors.white,// const Color(0xFF08112D),
-                          borderRadius: WidgetConfig.borderRadius,
-                          // border: Border.all(color: Colors.black, width: 1)
+                        color: Colors.white, // const Color(0xFF08112D),
+                        borderRadius: WidgetConfig.borderRadius,
+                        // border: Border.all(color: Colors.black, width: 1)
                       ),
-                      child: MouseRegion(
+                      child: image != null ? Image.memory(image!.bytes) : MouseRegion(
                           cursor: SystemMouseCursors.click,
                           child: GestureDetector(
                             onPanDown: onPressed,
@@ -152,12 +154,13 @@ class _ScenePageState extends State<ScenePage> {
                                                 ScenePage.areaHeight(context),
                                             sceneWidth:
                                                 ScenePage.areaWidth(context),
-                                            settings: renderSettings,
+                                            settings: settings,
                                             yRotAngle: zRotAngle.value,
                                             zRotAngle: yRotAngle.value)),
                               ),
                             )),
-                          ))),
+                          ))
+                  ),
                   Container(
                     padding: WidgetConfig.paddingAll,
                     width: ScenePage.areaWidth(context),
@@ -167,13 +170,25 @@ class _ScenePageState extends State<ScenePage> {
                             onTap: openScene,
                             text: "Open scene",
                             iconData: Icons.open_in_browser),
-                        const SizedBox(width: WidgetConfig.padding,),
+                        const SizedBox(
+                          width: WidgetConfig.padding,
+                        ),
                         buildButton(context,
                             onTap: init,
                             text: "Init",
-                            iconColor: Colors.red,
+                            iconColor: Colors.green,
                             iconData: Icons.restart_alt),
-                        const SizedBox(width: WidgetConfig.padding,),
+                        const SizedBox(
+                          width: WidgetConfig.padding,
+                        ),
+                        buildButton(context,
+                            onTap: render,
+                            text: "Render",
+                            iconColor: Colors.red,
+                            iconData: Icons.rectangle_outlined),
+                        const SizedBox(
+                          width: WidgetConfig.padding,
+                        ),
                       ],
                     ),
                   )
@@ -197,6 +212,17 @@ class _ScenePageState extends State<ScenePage> {
     updateRenderSettings();
     yRotAngle.value = 0;
     zRotAngle.value = 0;
+    setState(() {
+      image = null;
+    });
+  }
+
+  void render() {
+    image = RenderAlgorithms().renderScene(
+        scene: scene, settings: settings, width: width, height: height);
+    setState(() {
+
+    });
   }
 
   Widget buildButton(BuildContext context,
@@ -210,7 +236,7 @@ class _ScenePageState extends State<ScenePage> {
           foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
           backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
           overlayColor: MaterialStateProperty.resolveWith<Color?>(
-                (Set<MaterialState> states) {
+            (Set<MaterialState> states) {
               if (states.contains(MaterialState.hovered)) {
                 return WidgetConfig.seedColor.withOpacity(0.04);
               }
@@ -249,7 +275,7 @@ class _ScenePageState extends State<ScenePage> {
 
   void updateZNear() {
     setState(() {
-      renderSettings.zNear = zNearScale.value * zNear;
+      settings.zNear = zNearScale.value * zNear;
     });
   }
 
@@ -262,19 +288,19 @@ class _ScenePageState extends State<ScenePage> {
     double step = 0.3;
     if (e.physicalKey == PhysicalKeyboardKey.keyW) {
       setState(() {
-        renderSettings.eye.x += step;
+        settings.eye.x += step;
       });
     } else if (e.physicalKey == PhysicalKeyboardKey.keyS) {
       setState(() {
-        renderSettings.eye.x -= step;
+        settings.eye.x -= step;
       });
     } else if (e.physicalKey == PhysicalKeyboardKey.keyD) {
       setState(() {
-        renderSettings.eye.y += step;
+        settings.eye.y += step;
       });
     } else if (e.physicalKey == PhysicalKeyboardKey.keyA) {
       setState(() {
-        renderSettings.eye.y -= step;
+        settings.eye.y -= step;
       });
     }
   }
@@ -287,14 +313,14 @@ class _ScenePageState extends State<ScenePage> {
         (120 * (RenderSettings.maxZNear - RenderSettings.minZNear));
     var ctrlTimeDelta = DateTime.now().difference(lastCTRLPressed);
     if (ctrlTimeDelta.inMilliseconds < 1000) {
-      Point3D dir = renderSettings.view - renderSettings.eye;
+      Point3D dir = settings.view - settings.eye;
       double len = dir.norm();
       if (len < 0.1) {
         return;
       }
       Point3D k = dir / len;
       setState(() {
-        renderSettings.eye += k * delta;
+        settings.eye += k * delta;
       });
       return;
     }
@@ -311,7 +337,7 @@ class _ScenePageState extends State<ScenePage> {
   }
 
   void onDragged(DragUpdateDetails details) {
-    double sign = (renderSettings.eye.x - renderSettings.view.x).sign;
+    double sign = (settings.eye.x - settings.view.x).sign;
     if (prevZ.abs() > 90) {
       sign *= -1;
     }

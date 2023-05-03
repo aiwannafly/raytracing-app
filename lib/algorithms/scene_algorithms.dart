@@ -41,11 +41,12 @@ class SceneAlgorithms {
                 sHeight: settings.planeHeight) *
             Transform3D().getCameraMatrix(
                 eye: settings.eye, view: settings.view, up: settings.up);
-    Matrix rotMatrix =
-        Transform3D().getRotationMatrixZ((zRotAngle + 1) * pi / 180) *
-            Transform3D().getRotationMatrixY(yRotAngle * pi / 180);
+    // Matrix rotMatrix =
+    //     Transform3D().getRotationMatrixZ((zRotAngle + 1) * pi / 180) *
+    //         Transform3D().getRotationMatrixY(yRotAngle * pi / 180);
+    Matrix rotMatrix = Matrix.identity(4);
     Point3D dir = settings.eye - settings.view;
-    for (Figure object in scene.objects) {
+    for (Figure object in scene.figures) {
       for (Section section in object.sections) {
         Section rotated = Section(
             Transform3D().applyMatrix(section.start, rotMatrix),
@@ -69,10 +70,10 @@ class SceneAlgorithms {
   }
 
   /*
-  Translates sections from 2D canvas to 3D scene
+  Translates points from 2D canvas to 3D scene
    */
-  List<Section> applyReverseCamViewMatrix(
-      {required List<Section> sections,
+  List<Point3D> applyReverseCamViewMatrix(
+      {required List<Point3D> points,
       required RenderSettings settings,
       int zRotAngle = 0,
       int yRotAngle = 0,
@@ -93,11 +94,9 @@ class SceneAlgorithms {
             Transform3D().getRotationMatrixZ((zRotAngle + 1) * pi / 180) *
             Transform3D().getRotationMatrixY(yRotAngle * pi / 180);
     Matrix invMatrix = transformMatrix.inverse();
-    List<Section> res = [];
-    for (Section s in sections) {
-      res.add(Section(
-          Transform3D().applyMatrix(s.start, invMatrix),
-          Transform3D().applyMatrix(s.end, invMatrix)));
+    List<Point3D> res = [];
+    for (Point3D p in points) {
+      res.add(Transform3D().applyMatrix(p, invMatrix));
     }
     return res;
   }
