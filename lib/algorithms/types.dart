@@ -47,6 +47,10 @@ class Point3D {
     return Point3D(x * a, y * a, z * a);
   }
 
+  Point3D operator ^(double a) {
+    return Point3D(pow(x, a) as double, pow(y, a) as double, pow(z, a) as double);
+  }
+
   Point3D operator /(double a) {
     return Point3D(x / a, y / a, z / a);
   }

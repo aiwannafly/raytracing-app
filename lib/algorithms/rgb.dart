@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:icg_raytracing/algorithms/types.dart';
 
 class RGBD {
@@ -19,6 +21,11 @@ class RGBD {
 
   RGBD operator *(double a) {
     return RGBD(red * a, green * a, blue * a);
+  }
+
+  RGBD operator ^(double a) {
+    return RGBD(
+        pow(red, a) as double, pow(green, a) as double, pow(blue, a) as double);
   }
 
   RGBD mulScalar(num scalar) {

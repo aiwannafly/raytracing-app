@@ -19,18 +19,21 @@ class SliderTextSetter<T extends num> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final inputController = TextEditingController();
-    if (T == int) {
-      inputController.text = notifier.value.toString();
-    } else {
-      inputController.text = notifier.value.toStringAsFixed(2);
+    void setCurrent() {
+      if (T == int) {
+        inputController.text = notifier.value.toString();
+      } else {
+        inputController.text = notifier.value.toStringAsFixed(2);
+      }
     }
+    setCurrent();
     return Container(
       alignment: Alignment.center,
       width: 420,
       child: Row(
         children: [
           Expanded(
-            flex: 4,
+            flex: 2,
             child: Text(
               leading,
               style: const TextStyle(
@@ -81,15 +84,21 @@ class SliderTextSetter<T extends num> extends StatelessWidget {
                       double? newVal = double.tryParse(s);
                       if (newVal == null) {
                         ServiceIO.showMessage("Enter a valid number", context);
+                        setCurrent();
                         return;
                       }
                       if (newVal < minVal || newVal > maxVal) {
                         ServiceIO.showMessage(
                             "Enter a number in range [$minVal, ..., $maxVal]",
                             context);
+                        setCurrent();
                         return;
                       }
-                      notifier.value = newVal.floor() as T;
+                      if (T == int) {
+                        notifier.value = newVal.floor() as T;
+                      } else {
+                        notifier.value = newVal as T;
+                      }
                     },
                   ),
                 ),

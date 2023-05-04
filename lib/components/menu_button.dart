@@ -60,7 +60,7 @@ class MenuButton extends StatelessWidget {
                   const SizedBox(
                     width: Config.padding / 2,
                   ),
-                  Config.defaultText(text),
+                  Config.defaultText(text, 16),
                   const SizedBox(
                     width: Config.padding,
                   ),

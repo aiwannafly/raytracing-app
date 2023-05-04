@@ -11,16 +11,14 @@ import 'package:flutter/foundation.dart' show kIsWeb;
    - add render settings file support
    - add error handling for .scene and .render files
    - parallelize process of ray tracing
-   - add gamma correction
    - add different quality levels of rendering
-   - add render settings menu
    - create fine testing data
    - speed up and optimize ray tracing
  */
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (!kIsWeb) {
-    await DesktopWindow.setMinWindowSize(const Size(1000, 700));
+    await DesktopWindow.setMinWindowSize(const Size(1000, 800));
   }
   runApp(const ICGRaytracingApp());
 }

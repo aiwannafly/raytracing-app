@@ -230,6 +230,7 @@ class RenderAlgorithms {
           image.setRGB(x: x.round(), y: y.round(), color: backRGB);
           continue;
         }
+        trace.light ^= 1 / settings.gamma;
         trace.light *= 255;
         image.setRGB(x: x.round(), y: y.round(), color: trace.light.toRGB());
       }

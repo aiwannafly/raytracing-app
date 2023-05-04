@@ -19,6 +19,7 @@ import 'package:icg_raytracing/model/scene/figures/sphere.dart';
 import 'package:icg_raytracing/model/scene/figures/triangle.dart';
 import 'package:icg_raytracing/model/scene/scene.dart';
 import 'package:icg_raytracing/painters/wire_scene_painter.dart';
+import 'package:icg_raytracing/services/image_file_service.dart';
 import 'package:icg_raytracing/services/scene_file_service.dart';
 
 import '../components/menu_button.dart';
@@ -56,6 +57,7 @@ class _ScenePageState extends State<ScenePage> {
   static final yRotAngle = ValueNotifier(0);
   static final currentTrace = ValueNotifier(0);
   final openSceneActive = ValueNotifier(true);
+  final saveImageActive = ValueNotifier(true);
   final initActive = ValueNotifier(true);
   final selectViewActive = ValueNotifier(true);
   final renderActive = ValueNotifier(true);
@@ -195,18 +197,54 @@ class _ScenePageState extends State<ScenePage> {
                               Icons.settings,
                               color: Colors.black87,
                             ))
-                        // IconButton(
-                        //     onPressed: openRenderSettings,
-                        //     icon: Icon(
-                        //       Icons.settings,
-                        //       color: Colors.black87,
-                        //     ))
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: Config.paddingAll,
+                    width: ScenePage.areaWidth(context),
+                    child: Row(
+                      children: [
+                        MenuButton(
+                            onTap: saveImage,
+                            isActive: saveImageActive,
+                            text: "Save image",
+                            iconColor: Colors.purple,
+                            iconData: Icons.save_alt),
+                        const SizedBox(
+                          width: Config.padding,
+                        ),
+                        MenuButton(
+                            onTap: loadRenderSettings,
+                            isActive: saveImageActive,
+                            text: "Load settings",
+                            iconColor: Colors.red,
+                            iconData: Icons.open_in_new),
+                        const SizedBox(
+                          width: Config.padding,
+                        ),
+                        MenuButton(
+                            onTap: saveRenderSettings,
+                            isActive: saveImageActive,
+                            text: "Save settings",
+                            iconColor: Colors.green,
+                            iconData: Icons.save),
                       ],
                     ),
                   )
                 ],
               ),
             )));
+  }
+
+  List<Section> transformedSections() {
+    return SceneAlgorithms().applyCamViewMatrix(
+        scene: scene,
+        sceneHeight: height,
+        sceneWidth: width,
+        settings: settings,
+        yRotAngle: zRotAngle.value,
+        zRotAngle: yRotAngle.value);
   }
 
   Widget mainContent(BuildContext context) {
@@ -218,33 +256,28 @@ class _ScenePageState extends State<ScenePage> {
             child: Config.defaultText("No scene is opened", 24),
           ),
         ),
-        hasScene ? MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onPanDown: onPressed,
-                onPanUpdate: onDragged,
-                child: ClipRRect(
-                    child: FittedBox(
-                  child: CustomPaint(
-                    size: Size(width, height),
-                    painter: WireScenePainter(
-                        sections: SceneAlgorithms().applyCamViewMatrix(
-                            scene: scene,
-                            sceneHeight: height,
-                            sceneWidth: width,
-                            settings: settings,
-                            yRotAngle: zRotAngle.value,
-                            zRotAngle: yRotAngle.value)),
-                  ),
-                )),
-              )
-        ) : const SizedBox(),
+        hasScene
+            ? MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onPanDown: onPressed,
+                  onPanUpdate: onDragged,
+                  child: ClipRRect(
+                      child: FittedBox(
+                    child: CustomPaint(
+                      size: Size(width, height),
+                      painter:
+                          WireScenePainter(sections: transformedSections()),
+                    ),
+                  )),
+                ))
+            : const SizedBox(),
         image != null
             ? Center(
-              child: ClipRRect(
-                  borderRadius: Config.borderRadius,
-                  child: Image.memory(image!.bytes)),
-            )
+                child: ClipRRect(
+                    borderRadius: Config.borderRadius,
+                    child: Image.memory(image!.bytes)),
+              )
             : const SizedBox(),
         Visibility(
             visible: currentTrace.value > 0,
@@ -262,6 +295,33 @@ class _ScenePageState extends State<ScenePage> {
             ))
       ],
     );
+  }
+
+  void saveRenderSettings() {
+    if (!hasScene) {
+      ServiceIO.showMessage("Scene is not selected", context);
+      return;
+    }
+  }
+
+  void loadRenderSettings() {
+    if (!hasScene) {
+      ServiceIO.showMessage("Scene is not selected", context);
+      return;
+    }
+  }
+
+  void saveImage() {
+    if (!hasScene) {
+      ServiceIO.showMessage("Scene is not selected", context);
+      return;
+    }
+    if (image != null) {
+      ImageFileService.saveImageBMP(context, image!);
+    } else {
+      ImageFileService.saveCanvasScene(context,
+          sections: transformedSections(), width: width, height: height);
+    }
   }
 
   void openRenderSettings() {
