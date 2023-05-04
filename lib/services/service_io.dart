@@ -33,8 +33,8 @@ class ServiceIO {
                 child: Text(
                   text,
                   style: const TextStyle(
-                      color: WidgetConfig.iconColor,
-                      fontFamily: WidgetConfig.fontFamily,
+                      color: Config.iconColor,
+                      fontFamily: Config.fontFamily,
                       fontSize: 20),
                 ),
               ),

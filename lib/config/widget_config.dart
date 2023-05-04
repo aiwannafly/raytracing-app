@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class WidgetConfig {
+class Config {
   static const defaultRadius = 8.0;
   static const borderRadius = BorderRadius.all(Radius.circular(defaultRadius));
   static const iconColor = Colors.black87;
@@ -27,8 +27,8 @@ class WidgetConfig {
     return Text(
       text,
       style: TextStyle(
-          color: WidgetConfig.iconColor,
-          fontFamily: WidgetConfig.fontFamily,
+          color: Config.iconColor,
+          fontFamily: Config.fontFamily,
           fontSize: fontSize),
     );
   }

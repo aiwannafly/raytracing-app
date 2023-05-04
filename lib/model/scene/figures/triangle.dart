@@ -46,7 +46,7 @@ class Triangle extends Figure {
     double alpha = _getTriangleArea(second, third, pos);
     double beta = _getTriangleArea(first, third, pos);
     double gamma = _getTriangleArea(second, first, pos);
-    const epsilon = 0.001;
+    const epsilon = 0.0001;
     if (alpha + beta + gamma > area + epsilon) {
       return null;
     }

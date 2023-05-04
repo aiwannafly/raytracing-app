@@ -1,5 +1,7 @@
+import 'dart:isolate';
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:icg_raytracing/algorithms/bmp.dart';
 import 'package:icg_raytracing/algorithms/rgb.dart';
 import 'package:icg_raytracing/algorithms/transform_3d.dart';
@@ -25,6 +27,25 @@ class Trace {
   RGBD light;
 
   Trace({required this.light, required this.dist});
+}
+
+class RenderData {
+  Scene scene;
+  RenderSettings settings;
+  double width;
+  double height;
+  int zRotAngle;
+  int yRotAngle;
+  SendPort sendPort;
+
+  RenderData(
+      {required this.scene,
+      required this.settings,
+      required this.width,
+      required this.height,
+      this.zRotAngle = 0,
+      this.yRotAngle = 0,
+      required this.sendPort});
 }
 
 class RenderAlgorithms {
@@ -105,12 +126,12 @@ class RenderAlgorithms {
     return false;
   }
 
-  Trace? traceRay(
+  Future<Trace?> traceRay(
       {required Point3D rStart,
       required Point3D rDir,
       required RenderSettings settings,
       required Scene scene,
-      int depth = 0}) {
+      int depth = 0}) async {
     FigureIntersection? closest =
         _findClosestFigure(rStart: rStart, rDir: rDir, figures: scene.figures);
     if (closest == null) {
@@ -148,7 +169,7 @@ class RenderAlgorithms {
     if (depth > 0) {
       var cosO = int.normal.scalarDot(rDir);
       Point3D reflectedDir = int.normal * 2 * cosO - rDir;
-      var rTrace = traceRay(
+      var rTrace = await traceRay(
           rStart: int.pos + reflectedDir * epsilon,
           rDir: reflectedDir,
           settings: settings,
@@ -164,31 +185,38 @@ class RenderAlgorithms {
     return Trace(light: light, dist: closest.dist);
   }
 
-  BMPImage renderScene({
-    required Scene scene,
-    required RenderSettings settings,
-    required double width,
-    required double height,
-    int zRotAngle = 0,
-    int yRotAngle = 0,
-  }) {
+  Future<BMPImage> renderScene(
+      {required Scene scene,
+      required RenderSettings settings,
+      required double width,
+      required double height,
+      int zRotAngle = 0,
+      int yRotAngle = 0,
+      required SendPort statusPort}) async {
     BMPImage image = BMPImage(width: width.round(), height: height.round());
     Matrix invMatrix = _getInvSceneMatrix(
         scene: scene, settings: settings, width: width, height: height);
     double z = settings.zNear;
     Point3D rStart = settings.eye;
+    Point3D backColor = settings.backgroundColor * 255;
+    RGB backRGB = RGB(backColor.x.round(), backColor.y.round(), backColor.z.round());
+    backRGB.normalize();
+    int count = 0;
     for (double y = 0; y < height; y++) {
       for (double x = 0; x < width; x++) {
         Point3D scenePoint = T3D().apply(Point3D(x, y, z), invMatrix);
         Point3D rDir = scenePoint - rStart;
         rDir /= rDir.norm();
-        Trace? trace = traceRay(
+        Trace? trace = await traceRay(
             rStart: rStart,
             rDir: rDir,
             settings: settings,
             scene: scene,
             depth: settings.tracingDepth);
+        count++;
+        statusPort.send(count);
         if (trace == null) {
+          image.setRGB(x: x.round(), y: y.round(), color: backRGB);
           continue;
         }
         trace.light *= 255;

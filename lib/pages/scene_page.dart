@@ -1,5 +1,7 @@
+import 'dart:isolate';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +9,7 @@ import 'package:icg_raytracing/algorithms/bmp.dart';
 import 'package:icg_raytracing/algorithms/render_algorithms.dart';
 import 'package:icg_raytracing/algorithms/scene_algorithms.dart';
 import 'package:icg_raytracing/algorithms/types.dart';
+import 'package:icg_raytracing/components/progress_bar.dart';
 import 'package:icg_raytracing/config/widget_config.dart';
 import 'package:icg_raytracing/model/render/render_settings.dart';
 import 'package:icg_raytracing/model/scene/figures/box.dart';
@@ -17,6 +20,8 @@ import 'package:icg_raytracing/model/scene/scene.dart';
 import 'package:icg_raytracing/painters/wire_scene_painter.dart';
 import 'package:icg_raytracing/services/scene_file_service.dart';
 
+import '../services/service_io.dart';
+
 class ScenePage extends StatefulWidget {
   const ScenePage({super.key});
 
@@ -24,10 +29,10 @@ class ScenePage extends StatefulWidget {
   State<ScenePage> createState() => _ScenePageState();
 
   static double areaWidth(BuildContext context) =>
-      WidgetConfig.pageWidth(context) * .9;
+      Config.pageWidth(context) * .9;
 
   static double areaHeight(BuildContext context) =>
-      WidgetConfig.pageHeight(context) * .8;
+      Config.pageHeight(context) * .8;
 }
 
 class _ScenePageState extends State<ScenePage> {
@@ -44,7 +49,11 @@ class _ScenePageState extends State<ScenePage> {
   bool dragJustStarted = false;
   static final zRotAngle = ValueNotifier(0);
   static final yRotAngle = ValueNotifier(0);
+  static final currentTrace = ValueNotifier(0);
+
   BMPImage? image;
+
+  bool get isRendering => currentTrace.value > 0;
 
   @override
   void initState() {
@@ -66,8 +75,8 @@ class _ScenePageState extends State<ScenePage> {
         second: Point3D(4, 3, 3),
         third: Point3D(5, 2, 9),
         optics: optics));
-    scene = Scene(
-        figures: objects, lightSources: [], ambient: Point3D(1, 1, 1));
+    scene =
+        Scene(figures: objects, lightSources: [], ambient: Point3D(1, 1, 1));
     keyboardFocusNode.requestFocus();
     zNearScale.addListener(updateZNear);
     yRotAngle.addListener(updateView);
@@ -121,9 +130,9 @@ class _ScenePageState extends State<ScenePage> {
   Widget build(BuildContext context) {
     return listenWrapper(context,
         child: Scaffold(
-            backgroundColor: WidgetConfig.backColor,
+            backgroundColor: Config.backColor,
             body: Container(
-              padding: WidgetConfig.paddingAll,
+              padding: Config.paddingAll,
               alignment: Alignment.topCenter,
               child: Column(
                 children: [
@@ -132,74 +141,99 @@ class _ScenePageState extends State<ScenePage> {
                       width: width,
                       decoration: const BoxDecoration(
                         color: Colors.white, // const Color(0xFF08112D),
-                        borderRadius: WidgetConfig.borderRadius,
-                        // border: Border.all(color: Colors.black, width: 1)
+                        borderRadius: Config.borderRadius,
                       ),
-                      child: image != null
-                          ? Image.memory(image!.bytes)
-                          : MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: GestureDetector(
-                                onPanDown: onPressed,
-                                onPanUpdate: onDragged,
-                                child: ClipRRect(
-                                    child: FittedBox(
-                                  child: CustomPaint(
-                                    size: Size(width, height),
-                                    painter: WireScenePainter(
-                                        sections: SceneAlgorithms()
-                                            .applyCamViewMatrix(
-                                                scene: scene,
-                                                sceneHeight: height,
-                                                sceneWidth: width,
-                                                settings: settings,
-                                                yRotAngle: zRotAngle.value,
-                                                zRotAngle: yRotAngle.value)),
-                                  ),
-                                )),
-                              ))),
-                  Container(
-                    padding: WidgetConfig.paddingAll,
-                    width: ScenePage.areaWidth(context),
-                    child: Row(
-                      children: [
-                        buildButton(context,
-                            onTap: openScene,
-                            text: "Open scene",
-                            iconData: Icons.open_in_browser),
-                        const SizedBox(
-                          width: WidgetConfig.padding,
-                        ),
-                        buildButton(context,
-                            onTap: init,
-                            text: "Init",
-                            iconColor: Colors.green,
-                            iconData: Icons.restart_alt),
-                        const SizedBox(
-                          width: WidgetConfig.padding,
-                        ),
-                        buildButton(context,
-                            onTap: render,
-                            text: "Render",
-                            iconColor: Colors.red,
-                            iconData: Icons.sunny),
-                        const SizedBox(
-                          width: WidgetConfig.padding,
-                        ),
-                        buildButton(context,
-                            onTap: selectView,
-                            text: "Select view",
-                            iconColor: Colors.purple,
-                            iconData: Icons.remove_red_eye_outlined),
-                        const SizedBox(
-                          width: WidgetConfig.padding,
-                        ),
-                      ],
+                      child: mainContent(context)),
+                  Visibility(
+                    visible: currentTrace.value == 0,
+                    child: Container(
+                      padding: Config.paddingAll,
+                      width: ScenePage.areaWidth(context),
+                      child: Row(
+                        children: [
+                          buildButton(context,
+                              onTap: openScene,
+                              text: "Open scene",
+                              iconData: Icons.open_in_browser),
+                          const SizedBox(
+                            width: Config.padding,
+                          ),
+                          buildButton(context,
+                              onTap: init,
+                              text: "Init",
+                              iconColor: Colors.green,
+                              iconData: Icons.restart_alt),
+                          const SizedBox(
+                            width: Config.padding,
+                          ),
+                          buildButton(context,
+                              onTap: render,
+                              text: "Render",
+                              iconColor: Colors.red,
+                              iconData: Icons.sunny),
+                          const SizedBox(
+                            width: Config.padding,
+                          ),
+                          buildButton(context,
+                              onTap: selectView,
+                              text: "Select view",
+                              iconColor: Colors.purple,
+                              iconData: Icons.remove_red_eye_outlined),
+                          const SizedBox(
+                            width: Config.padding,
+                          ),
+                        ],
+                      ),
                     ),
                   )
                 ],
               ),
             )));
+  }
+
+  Widget mainContent(BuildContext context) {
+    if (image != null) {
+      return Image.memory(image!.bytes);
+    }
+    return Stack(
+      children: [
+        MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onPanDown: onPressed,
+              onPanUpdate: onDragged,
+              child: ClipRRect(
+                  child: FittedBox(
+                child: CustomPaint(
+                  size: Size(width, height),
+                  painter: WireScenePainter(
+                      sections: SceneAlgorithms().applyCamViewMatrix(
+                          scene: scene,
+                          sceneHeight: height,
+                          sceneWidth: width,
+                          settings: settings,
+                          yRotAngle: zRotAngle.value,
+                          zRotAngle: yRotAngle.value)),
+                ),
+              )),
+            )),
+        Visibility(
+            visible: currentTrace.value > 0,
+            child: Center(
+              child: Container(
+                alignment: Alignment.center,
+                height: 150,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(.8),
+                  borderRadius: Config.borderRadius
+                ),
+                width: Config.pageWidth(context) * .6,
+                child: TraceProgressIndicator(
+                    current: currentTrace, desired: width.round() * height.round()),
+              ),
+            ))
+      ],
+    );
   }
 
   void openScene() async {
@@ -222,10 +256,28 @@ class _ScenePageState extends State<ScenePage> {
     });
   }
 
-  void render() {
-    image = RenderAlgorithms().renderScene(
-        scene: scene, settings: settings, width: width, height: height);
-    setState(() {});
+  void render() async {
+    setState(() {
+      currentTrace.value++;
+    });
+    var receivePort = ReceivePort();
+    compute(
+            callRender,
+            RenderData(
+                scene: scene,
+                settings: settings,
+                width: width,
+                height: height,
+                sendPort: receivePort.sendPort))
+        .then((res) {
+      image = res;
+      setState(() {
+        currentTrace.value = 0;
+      });
+    });
+    receivePort.listen((value) {
+      currentTrace.value = value;
+    });
   }
 
   void selectView() {
@@ -238,7 +290,7 @@ class _ScenePageState extends State<ScenePage> {
       {required String text,
       required IconData iconData,
       required VoidCallback onTap,
-      Color iconColor = WidgetConfig.seedColor}) {
+      Color iconColor = Config.seedColor}) {
     return ElevatedButton(
         onPressed: onTap,
         style: ButtonStyle(
@@ -247,11 +299,11 @@ class _ScenePageState extends State<ScenePage> {
           overlayColor: MaterialStateProperty.resolveWith<Color?>(
             (Set<MaterialState> states) {
               if (states.contains(MaterialState.hovered)) {
-                return WidgetConfig.seedColor.withOpacity(0.04);
+                return Config.seedColor.withOpacity(0.04);
               }
               if (states.contains(MaterialState.focused) ||
                   states.contains(MaterialState.pressed)) {
-                return WidgetConfig.seedColor.withOpacity(0.12);
+                return Config.seedColor.withOpacity(0.12);
               }
               return null; // Defer to the widget's default.
             },
@@ -270,11 +322,11 @@ class _ScenePageState extends State<ScenePage> {
                   color: iconColor,
                 ),
                 const SizedBox(
-                  width: WidgetConfig.padding / 2,
+                  width: Config.padding / 2,
                 ),
-                WidgetConfig.defaultText(text),
+                Config.defaultText(text),
                 const SizedBox(
-                  width: WidgetConfig.padding * 2.3,
+                  width: Config.padding * 2.3,
                 ),
               ],
             ),
@@ -283,12 +335,18 @@ class _ScenePageState extends State<ScenePage> {
   }
 
   void updateZNear() {
+    if (isRendering) {
+      return;
+    }
     setState(() {
       settings.zNear = zNearScale.value * zNear;
     });
   }
 
   void handleKeyEvent(KeyEvent e) {
+    if (isRendering) {
+      return;
+    }
     if (e.physicalKey == PhysicalKeyboardKey.controlLeft ||
         e.physicalKey == PhysicalKeyboardKey.controlRight) {
       lastCTRLPressed = DateTime.now();
@@ -315,6 +373,9 @@ class _ScenePageState extends State<ScenePage> {
   }
 
   void handleMouseWheel(PointerSignalEvent e) {
+    if (isRendering) {
+      return;
+    }
     if (e is! PointerScrollEvent) {
       return;
     }
@@ -340,12 +401,18 @@ class _ScenePageState extends State<ScenePage> {
   }
 
   void onPressed(DragDownDetails details) {
+    if (isRendering) {
+      return;
+    }
     dragJustStarted = true;
     prevY = yRotAngle.value;
     prevZ = zRotAngle.value;
   }
 
   void onDragged(DragUpdateDetails details) {
+    if (isRendering) {
+      return;
+    }
     double sign = (settings.eye.x - settings.view.x).sign;
     if (prevZ.abs() > 90) {
       sign *= -1;
@@ -366,4 +433,13 @@ class _ScenePageState extends State<ScenePage> {
     zRotAngle.value = newRotX;
     yRotAngle.value = newRotY;
   }
+}
+
+Future<BMPImage> callRender(RenderData data) async {
+  return await RenderAlgorithms().renderScene(
+      scene: data.scene,
+      settings: data.settings,
+      width: data.width,
+      height: data.height,
+      statusPort: data.sendPort);
 }

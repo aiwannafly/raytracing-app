@@ -11,7 +11,7 @@ class ICGRaytracingApp extends StatelessWidget {
     return MaterialApp(
       title: 'ICG Raytracing',
       theme: ThemeData(
-          colorSchemeSeed: WidgetConfig.seedColor,
+          colorSchemeSeed: Config.seedColor,
           brightness: Brightness.light,
           useMaterial3: true
       ),
