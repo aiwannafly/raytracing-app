@@ -69,9 +69,7 @@ class RenderAlgorithms {
     required Scene scene,
     required RenderSettings settings,
     required double width,
-    required double height,
-    int zRotAngle = 0,
-    int yRotAngle = 0,
+    required double height
   }) {
     double w = width / 2;
     double h = height / 2;
@@ -198,8 +196,6 @@ class RenderAlgorithms {
       required RenderSettings settings,
       required double width,
       required double height,
-      int zRotAngle = 0,
-      int yRotAngle = 0,
       required SendPort statusPort}) async {
     BMPImage image = BMPImage(width: width.round(), height: height.round());
     Matrix invMatrix = _getInvSceneMatrix(

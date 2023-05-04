@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:icg_raytracing/algorithms/bmp.dart';
 import 'package:icg_raytracing/algorithms/render_algorithms.dart';
 import 'package:icg_raytracing/algorithms/scene_algorithms.dart';
+import 'package:icg_raytracing/algorithms/transform_3d.dart';
 import 'package:icg_raytracing/algorithms/types.dart';
 import 'package:icg_raytracing/components/interactive_box.dart';
 import 'package:icg_raytracing/components/progress_bar.dart';
@@ -39,19 +40,15 @@ class _ScenePageState extends State<ScenePage> {
   bool hasScene = false;
   late Scene scene;
   late RenderSettings settings;
-  bool initializedEye = false;
   final zNearScale = ValueNotifier(1.0);
   late double zNear;
   final keyboardFocusNode = FocusNode();
   DateTime lastCTRLPressed = DateTime.now();
-  int prevZ = 0;
-  int prevY = 0;
   int startDx = 0;
   int startDy = 0;
   bool dragJustStarted = false;
+  late Point3D prevEye;
   int pixelsCount = 1000000;
-  static final zRotAngle = ValueNotifier(0);
-  static final yRotAngle = ValueNotifier(0);
   static final currentTrace = ValueNotifier(0);
   final openSceneActive = ValueNotifier(true);
   final saveImageActive = ValueNotifier(true);
@@ -68,44 +65,11 @@ class _ScenePageState extends State<ScenePage> {
     super.initState();
     keyboardFocusNode.requestFocus();
     zNearScale.addListener(updateZNear);
-    yRotAngle.addListener(updateView);
-    zRotAngle.addListener(updateView);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    updateRenderSettings();
-    initializedEye = true;
-  }
-
-  void updateRenderSettings() {
-    if (!hasScene) {
-      return;
-    }
-    Point3D? oldEye;
-    if (initializedEye) {
-      oldEye = settings.eye;
-    }
-    settings = RenderSettings.fromScene(
-        scene: scene,
-        quality: Quality.normal,
-        depth: 3,
-        backgroundColor: RGB(230, 230, 230),
-        gamma: 1,
-        desiredWidth: ScenePage.areaWidth(context),
-        desiredHeight: ScenePage.areaHeight(context));
-    if (oldEye != null) {
-      settings.eye = oldEye;
-    }
-    zNear = settings.zNear;
   }
 
   @override
   void dispose() {
     zNearScale.removeListener(updateZNear);
-    yRotAngle.removeListener(updateView);
-    zRotAngle.removeListener(updateView);
     super.dispose();
   }
 
@@ -239,9 +203,7 @@ class _ScenePageState extends State<ScenePage> {
         scene: scene,
         sceneHeight: height,
         sceneWidth: width,
-        settings: settings,
-        yRotAngle: zRotAngle.value,
-        zRotAngle: yRotAngle.value);
+        settings: settings);
   }
 
   Widget mainContent(BuildContext context) {
@@ -346,8 +308,15 @@ class _ScenePageState extends State<ScenePage> {
       image = null;
       hasScene = true;
       selectViewActive.value = false;
-      initializedEye = false;
-      updateRenderSettings();
+      settings = RenderSettings.fromScene(
+          scene: scene,
+          quality: Quality.normal,
+          depth: 3,
+          backgroundColor: RGB(230, 230, 230),
+          gamma: 1,
+          desiredWidth: ScenePage.areaWidth(context),
+          desiredHeight: ScenePage.areaHeight(context));
+      zNear = settings.zNear;
     });
   }
 
@@ -357,11 +326,6 @@ class _ScenePageState extends State<ScenePage> {
       return;
     }
     selectViewActive.value = false;
-    initializedEye = false;
-    updateRenderSettings();
-    initializedEye = true;
-    yRotAngle.value = 0;
-    zRotAngle.value = 0;
     setState(() {
       image = null;
     });
@@ -486,21 +450,16 @@ class _ScenePageState extends State<ScenePage> {
       return;
     }
     dragJustStarted = true;
-    prevY = yRotAngle.value;
-    prevZ = zRotAngle.value;
+    prevEye = settings.eye;
   }
 
   void onDragged(DragUpdateDetails details) {
     if (isRendering || image != null) {
       return;
     }
-    double sign = (settings.eye.x - settings.view.x).sign;
-    if (prevZ.abs() > 90) {
-      sign *= -1;
-    }
-    int delimiter = 6;
-    int dx = sign * details.localPosition.dy.round() ~/ delimiter;
-    int dy = -details.localPosition.dx.round() ~/ delimiter;
+    int delimiter = 4;
+    int dx = details.localPosition.dx.round() ~/ delimiter;
+    int dy = details.localPosition.dy.round() ~/ delimiter;
     if (dragJustStarted) {
       startDx = dx;
       startDy = dy;
@@ -509,9 +468,13 @@ class _ScenePageState extends State<ScenePage> {
     }
     dx -= startDx;
     dy -= startDy;
-    int newRotX = RenderSettings.normalizeAngle(prevZ + dx);
-    int newRotY = RenderSettings.normalizeAngle(prevY + dy);
-    zRotAngle.value = newRotX;
-    yRotAngle.value = newRotY;
+    if (prevEye.x > 0) {
+      dy = -dy;
+    }
+    setState(() {
+      settings.eye =
+          T3D().apply(prevEye, T3D().getRotationMatrixZ(dx * pi / 180) *
+          T3D().getRotationMatrixY(dy * pi / 180));
+    });
   }
 }

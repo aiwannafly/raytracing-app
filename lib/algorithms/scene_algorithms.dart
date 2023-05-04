@@ -21,8 +21,6 @@ class SceneAlgorithms {
   List<Section> applyCamViewMatrix(
       {required Scene scene,
       required RenderSettings settings,
-      int zRotAngle = 0,
-      int yRotAngle = 0,
       required double sceneWidth,
       required double sceneHeight}) {
     if (settings.overallSizes != null) {
@@ -60,39 +58,6 @@ class SceneAlgorithms {
         result.add(transformed);
       }
     }
-    // print('\n${settings.zNear}\n${settings.zFar}\n${settings.eye}\n${settings.view}\n');
     return result;
-  }
-
-  /*
-  Translates points from 2D canvas to 3D scene
-   */
-  List<Point3D> applyReverseCamViewMatrix(
-      {required List<Point3D> points,
-      required RenderSettings settings,
-      int zRotAngle = 0,
-      int yRotAngle = 0,
-      required double sceneWidth,
-      required double sceneHeight}) {
-    double w = sceneWidth / 2;
-    double h = sceneHeight / 2;
-    Matrix transformMatrix = T3D()
-            .getScaleMatrix(scaleX: w, scaleY: h, scaleZ: 1) *
-        T3D().getTranslationMatrix(trX: 1, trY: 1, trZ: 0) *
-        T3D().getVisibleAreaMatrix(
-            zNear: settings.zNear,
-            zFar: settings.zFar,
-            sWidth: settings.planeWidth,
-            sHeight: settings.planeHeight) *
-        T3D().getCamMatrix(
-            eye: settings.eye, view: settings.view, up: settings.up) *
-        T3D().getRotationMatrixZ((zRotAngle + 1) * pi / 180) *
-        T3D().getRotationMatrixY(yRotAngle * pi / 180);
-    Matrix invMatrix = transformMatrix.inverse();
-    List<Point3D> res = [];
-    for (Point3D p in points) {
-      res.add(T3D().apply(p, invMatrix));
-    }
-    return res;
   }
 }

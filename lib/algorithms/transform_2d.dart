@@ -2,11 +2,11 @@ import 'package:icg_raytracing/algorithms/types.dart';
 import 'package:ml_linalg/matrix.dart';
 import 'package:ml_linalg/vector.dart';
 
-class Transform2D {
-  Transform2D._internal();
+class T2D {
+  T2D._internal();
 
-  factory Transform2D() {
-    return Transform2D._internal();
+  factory T2D() {
+    return T2D._internal();
   }
 
   Matrix getScaleMatrix({required double scaleX, required double scaleY}) {
