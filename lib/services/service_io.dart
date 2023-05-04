@@ -4,6 +4,7 @@ import 'package:icg_raytracing/components/value_selector.dart';
 import 'package:icg_raytracing/components/value_setter.dart';
 import 'package:icg_raytracing/model/render/render_settings.dart';
 
+import '../algorithms/rgb.dart';
 import '../algorithms/types.dart';
 import '../config/config.dart';
 
@@ -62,9 +63,8 @@ class ServiceIO {
     depth.addListener(() {
       settings.depth = depth.value;
     });
-    Point3D color = settings.backgroundColor * 255;
-    Color pickerColor =
-        Color.fromRGBO(color.x.round(), color.y.round(), color.z.round(), 1);
+    RGB color = settings.backgroundColor;
+    Color pickerColor = Color.fromRGBO(color.red, color.green, color.blue, 1);
     showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -119,8 +119,8 @@ class ServiceIO {
                           colorPickerWidth: 150,
                           onColorChanged: (newColor) {
                             pickerColor = newColor;
-                            settings.backgroundColor = Point3D(newColor.red / 255,
-                                newColor.green / 255, newColor.blue / 255);
+                            settings.backgroundColor = RGB(
+                                newColor.red, newColor.green, newColor.blue);
                           },
                         ),
                       )

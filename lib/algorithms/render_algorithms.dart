@@ -206,9 +206,6 @@ class RenderAlgorithms {
         scene: scene, settings: settings, width: width, height: height);
     double z = settings.zNear;
     Point3D rStart = settings.eye;
-    Point3D backColor = settings.backgroundColor * 255;
-    RGB backRGB = RGB(backColor.x.round(), backColor.y.round(), backColor.z.round());
-    backRGB.normalize();
     int count = 0;
     int sendFreq = width.round() * height.round() ~/ 200;
     for (double y = 0; y < height; y++) {
@@ -227,7 +224,7 @@ class RenderAlgorithms {
           statusPort.send(count);
         }
         if (trace == null) {
-          image.setRGB(x: x.round(), y: y.round(), color: backRGB);
+          image.setRGB(x: x.round(), y: y.round(), color: settings.backgroundColor);
           continue;
         }
         trace.light ^= 1 / settings.gamma;

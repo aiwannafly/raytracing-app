@@ -55,6 +55,11 @@ class RGB {
 
   RGB(this.red, this.green, this.blue);
 
+  @override
+  String toString() {
+    return '$red $green $blue';
+  }
+
   RGB.mono(int value) {
     red = value;
     blue = value;

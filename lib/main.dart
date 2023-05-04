@@ -7,8 +7,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
   TODO:
    - add rotation around view with use of a mouse
    - fix wire scene graphics artefacts
-   - add support of saving wire scene pictures, rendered pictures
-   - add render settings file support
    - add error handling for .scene and .render files
    - parallelize process of ray tracing
    - add different quality levels of rendering

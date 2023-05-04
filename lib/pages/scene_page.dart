@@ -13,15 +13,12 @@ import 'package:icg_raytracing/components/interactive_box.dart';
 import 'package:icg_raytracing/components/progress_bar.dart';
 import 'package:icg_raytracing/config/config.dart';
 import 'package:icg_raytracing/model/render/render_settings.dart';
-import 'package:icg_raytracing/model/scene/figures/box.dart';
-import 'package:icg_raytracing/model/scene/figures/figure.dart';
-import 'package:icg_raytracing/model/scene/figures/sphere.dart';
-import 'package:icg_raytracing/model/scene/figures/triangle.dart';
 import 'package:icg_raytracing/model/scene/scene.dart';
 import 'package:icg_raytracing/painters/wire_scene_painter.dart';
 import 'package:icg_raytracing/services/image_file_service.dart';
 import 'package:icg_raytracing/services/scene_file_service.dart';
 
+import '../algorithms/rgb.dart';
 import '../components/menu_button.dart';
 import '../services/service_io.dart';
 
@@ -94,7 +91,7 @@ class _ScenePageState extends State<ScenePage> {
         scene: scene,
         quality: Quality.normal,
         depth: 3,
-        backgroundColor: Point3D(1, 1, 1),
+        backgroundColor: RGB(230, 230, 230),
         gamma: 1,
         desiredWidth: ScenePage.areaWidth(context),
         desiredHeight: ScenePage.areaHeight(context));
@@ -297,17 +294,24 @@ class _ScenePageState extends State<ScenePage> {
     );
   }
 
-  void saveRenderSettings() {
+  void saveRenderSettings() async {
     if (!hasScene) {
       ServiceIO.showMessage("Scene is not selected", context);
       return;
     }
+    await SceneFileService().saveSettingsFile(settings: settings);
   }
 
-  void loadRenderSettings() {
+  void loadRenderSettings() async {
     if (!hasScene) {
       ServiceIO.showMessage("Scene is not selected", context);
       return;
+    }
+    RenderSettings? newSettings = await SceneFileService().openSettingsFile();
+    if (newSettings != null) {
+      setState(() {
+        settings = newSettings;
+      });
     }
   }
 

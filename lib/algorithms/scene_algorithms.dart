@@ -25,9 +25,11 @@ class SceneAlgorithms {
       int yRotAngle = 0,
       required double sceneWidth,
       required double sceneHeight}) {
-    settings.planeHeight = max(settings.overallSizes.y,
-        settings.overallSizes.x * (sceneHeight) / sceneWidth);
-    settings.planeWidth = settings.planeHeight * (sceneWidth / sceneHeight);
+    if (settings.overallSizes != null) {
+      settings.planeHeight = max(settings.overallSizes!.y,
+          settings.overallSizes!.x * (sceneHeight) / sceneWidth);
+      settings.planeWidth = settings.planeHeight * (sceneWidth / sceneHeight);
+    }
     List<Section> result = [];
     double w = sceneWidth / 2;
     double h = sceneHeight / 2;

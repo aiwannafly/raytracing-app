@@ -4,6 +4,7 @@ import 'package:icg_raytracing/algorithms/types.dart';
 import 'package:icg_raytracing/model/scene/light_source.dart';
 import 'package:icg_raytracing/model/scene/scene.dart';
 
+import '../../algorithms/rgb.dart';
 import '../scene/figures/figure.dart';
 
 enum Quality { rough, normal, fine }
@@ -19,7 +20,7 @@ extension on Quality {
 }
 
 class RenderSettings {
-  Point3D backgroundColor;
+  RGB backgroundColor;
   double gamma;
   int depth;
   Quality quality;
@@ -31,7 +32,7 @@ class RenderSettings {
   late double zFar;
   late double planeWidth;
   late double planeHeight;
-  late Point3D overallSizes;
+  Point3D? overallSizes;
 
   static const overallBoxExpand = 0.05;
 
@@ -63,7 +64,8 @@ class RenderSettings {
       required this.zNear,
       required this.zFar,
       required this.planeWidth,
-      required this.planeHeight});
+      required this.planeHeight}) {
+  }
 
   RenderSettings.fromScene(
       {required Scene scene,
@@ -102,10 +104,10 @@ class RenderSettings {
     view = center;
     up = Point3D(0, 0, 1);
     eye = Point3D(center.x, center.y, center.z);
-    eye.x -= overallSizes.x;
+    eye.x -= overallSizes!.x;
     zNear = (minPos.x - eye.x) / 2;
-    zFar = maxPos.x - eye.x + overallSizes.x / 2;
-    planeHeight = max(overallSizes.y, overallSizes.x * (desiredHeight) / desiredWidth);
+    zFar = maxPos.x - eye.x + overallSizes!.x / 2;
+    planeHeight = max(overallSizes!.y, overallSizes!.x * (desiredHeight) / desiredWidth);
     planeWidth = planeHeight * (desiredWidth / desiredHeight);
     for (Figure f in scene.figures) {
       minPos.x = min(minPos.x, f.minPos.x);
