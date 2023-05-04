@@ -225,10 +225,10 @@ class BMPImage {
         }
         if (nextX == newWidth) break;
         int x1 = x, x2 = nextX, y1 = y, y2 = nextY;
-        RGBDouble f11 = newImage.getRGB(x: x1, y: y1)!.toRGBDouble();
-        RGBDouble f12 = newImage.getRGB(x: x1, y: y2)!.toRGBDouble();
-        RGBDouble f21 = newImage.getRGB(x: x2, y: y1)!.toRGBDouble();
-        RGBDouble f22 = newImage.getRGB(x: x2, y: y2)!.toRGBDouble();
+        RGBD f11 = newImage.getRGB(x: x1, y: y1)!.toRGBDouble();
+        RGBD f12 = newImage.getRGB(x: x1, y: y2)!.toRGBDouble();
+        RGBD f21 = newImage.getRGB(x: x2, y: y1)!.toRGBDouble();
+        RGBD f22 = newImage.getRGB(x: x2, y: y2)!.toRGBDouble();
         for (int i = y1; i <= y2; i++) {
           for (int j = x1; j <= x2; j++) {
             if ((i == y1 && j == x1) ||
@@ -239,11 +239,11 @@ class BMPImage {
             }
             num alphaX = (j - x1) / (x2 - x1);
             num alphaY = (i - y1) / (y2 - y1);
-            var color1 = RGBDouble.sumTwo(
+            var color1 = RGBD.sumTwo(
                 f11.mulScalar(1 - alphaX), f21.mulScalar(alphaX));
-            var color2 = RGBDouble.sumTwo(
+            var color2 = RGBD.sumTwo(
                 f12.mulScalar(1 - alphaX), f22.mulScalar(alphaX));
-            var res = RGBDouble.sumTwo(
+            var res = RGBD.sumTwo(
                 color1.mulScalar(1 - alphaY), color2.mulScalar(alphaY));
             newImage.setRGB(x: j, y: i, color: res.toRGB());
           }

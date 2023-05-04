@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:icg_raytracing/algorithms/types.dart';
+import 'package:icg_raytracing/model/scene/figures/plane.dart';
 
 import 'figure.dart';
 
@@ -9,6 +10,7 @@ class Quadrangle extends Figure {
   Point3D second;
   Point3D third;
   Point3D fourth;
+  late Plane plane;
 
   Quadrangle(
       {required this.first,
@@ -32,11 +34,35 @@ class Quadrangle extends Figure {
       Section(third, fourth),
       Section(fourth, first)
     ]));
+    plane = Plane.fromDots(first, second, third);
+  }
+
+  @override
+  void shift(Point3D delta) {
+    super.shift(delta);
+    first -= delta;
+    second -= delta;
+    third -= delta;
+    fourth -= delta;
+    plane = Plane.fromDots(first, second, third);
   }
 
   @override
   Intersection? intersect({required Point3D rayStart, required Point3D rayDir}) {
     return null;
+    double? t = plane.intersect(rayStart: rayStart, rayDir: rayDir);
+    if (t == null) {
+      return null;
+    }
+    Point3D pos = rayStart + rayDir * t;
+    bool inside = pos >= minPos && pos <= maxPos;
+    if (!inside) {
+      return null;
+    }
+    Point3D normal = plane.normal;
+    if (rayDir.scalarDot(normal) >= 0) {
+      normal = -normal;
+    }
+    return Intersection(pos: pos, normal: normal);
   }
-
 }

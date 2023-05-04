@@ -1,9 +1,9 @@
-class RGBDouble {
+class RGBD {
   double red;
   double blue;
   double green;
 
-  RGBDouble(this.red, this.green, this.blue);
+  RGBD(this.red, this.green, this.blue);
 
   RGB toRGB() {
     var rgb = RGB(red.round(), green.round(), blue.round());
@@ -11,26 +11,26 @@ class RGBDouble {
     return rgb;
   }
 
-  RGBDouble operator +(RGBDouble o) {
-    return RGBDouble(red + o.red, green + o.green, blue + o.blue);
+  RGBD operator +(RGBD o) {
+    return RGBD(red + o.red, green + o.green, blue + o.blue);
   }
 
-  RGBDouble operator *(double a) {
-    return RGBDouble(red * a, green * a, blue * a);
+  RGBD operator *(double a) {
+    return RGBD(red * a, green * a, blue * a);
   }
 
 
-  RGBDouble mulScalar(num scalar) {
-    return RGBDouble(red * scalar, green * scalar, blue * scalar);
+  RGBD mulScalar(num scalar) {
+    return RGBD(red * scalar, green * scalar, blue * scalar);
   }
 
-  static RGBDouble sumTwo(RGBDouble first, RGBDouble second) {
-    return RGBDouble(first.red + second.red, first.green + second.green,
+  static RGBD sumTwo(RGBD first, RGBD second) {
+    return RGBD(first.red + second.red, first.green + second.green,
         first.blue + second.blue);
   }
 
-  static RGBDouble sum(List<RGBDouble> args) {
-    RGBDouble res = RGBDouble(0, 0, 0);
+  static RGBD sum(List<RGBD> args) {
+    RGBD res = RGBD(0, 0, 0);
     for (var arg in args) {
       res.red += arg.red;
       res.green += arg.green;
@@ -54,8 +54,8 @@ class RGB {
     normalize();
   }
 
-  RGBDouble toRGBDouble() {
-    return RGBDouble(red.toDouble(), green.toDouble(), blue.toDouble());
+  RGBD toRGBDouble() {
+    return RGBD(red.toDouble(), green.toDouble(), blue.toDouble());
   }
 
   void addAll(int val) {

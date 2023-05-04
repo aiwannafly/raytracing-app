@@ -42,12 +42,12 @@ class RenderAlgorithms {
         T3D().getScaleMatrix(scaleX: 1 / w, scaleY: 1 / h, scaleZ: 1);
 
     double z = settings.zNear;
-    Point3D rayStart = settings.eye;
+    Point3D rStart = settings.eye;
 
     // Point3D start = Point3D(0, 0, 0);
     // Point3D dir = Point3D(0, 0, 1);
     // for (Figure f in scene.figures) {
-    //   Intersection? int = f.intersect(rayStart: start, rayDir: dir);
+    //   Intersection? int = f.intersect(rStart: start, rDir: dir);
     //   if (int == null) {
     //     continue;
     //   }
@@ -58,43 +58,61 @@ class RenderAlgorithms {
     for (double y = 0; y < height; y++) {
       for (double x = 0; x < width; x++) {
         Point3D scenePoint = T3D().apply(Point3D(x, y, z), invMatrix);
-        Point3D rayDir = scenePoint - rayStart;
-        rayDir /= rayDir.norm();
+        Point3D rDir = scenePoint - rStart;
+        rDir /= rDir.norm();
+        Figure? intFigure;
+        double? minDist;
         for (Figure figure in scene.figures) {
-          // print('figure: ${figure.minPos} ${figure.maxPos}');
-          Intersection? int = figure.intersect(rayStart: rayStart, rayDir: rayDir);
-          if (int == null) {
+          Intersection? int = figure.intersect(rayStart: rStart, rayDir: rDir);
+          if (int != null) {
+            if (minDist == null) {
+              intFigure = figure;
+              var ray = int.pos - rStart;
+              minDist = ray.scalarDot(ray);
+            } else {
+              var ray = int.pos - rStart;
+              var dist = ray.scalarDot(ray);
+              if (dist < minDist) {
+                minDist = dist;
+                intFigure = figure;
+              }
+            }
+          }
+        }
+        if (intFigure == null) {
+          continue;
+        }
+        var figure = intFigure;
+        Intersection? int = figure.intersect(rayStart: rStart, rayDir: rDir);
+        if (int == null) {
+          continue;
+        }
+        Point3D view = settings.eye - int.pos;
+        view /= view.norm();
+        RGBD light = RGBD(
+            scene.ambientColor.x, scene.ambientColor.y, scene.ambientColor.z);
+        for (LightSource l in scene.lightSources) {
+          var lDir = l.pos - int.pos;
+          lDir /= lDir.norm();
+          var cosO = int.normal.scalarDot(lDir);
+          if (cosO <= 0) {
             continue;
           }
-          Point3D view = settings.eye - int.pos;
-          view /= view.norm();
-          RGBDouble light = RGBDouble(
-              scene.ambientColor.x, scene.ambientColor.y, scene.ambientColor.z);
-          for (LightSource l in scene.lightSources) {
-            var lDir = l.pos - int.pos;
-            lDir /= lDir.norm();
-            var cosO = int.normal.scalarDot(lDir);
-            if (cosO <= 0) {
-              continue;
-            }
-            Point3D reflected = int.normal * 2 * cosO - lDir;
-            var d = figure.optics.diff;
-            light +=
-                RGBDouble(l.color.x * d.x, l.color.y * d.y, l.color.z * d.z) *
-                    cosO;
-            var s = figure.optics.sight;
-            num cosA = reflected.scalarDot(view);
-            if (cosA <= 0) {
-              continue;
-            }
-            double power = pow(cosA, figure.optics.power) as double;
-            light +=
-                RGBDouble(l.color.x * s.x, l.color.y * s.y, l.color.z * s.z) *
-                    power;
+          Point3D reflected = int.normal * 2 * cosO - lDir;
+          var d = figure.optics.diff;
+          light +=
+              RGBD(l.color.x * d.x, l.color.y * d.y, l.color.z * d.z) * cosO;
+          var s = figure.optics.sight;
+          num cosA = reflected.scalarDot(view);
+          if (cosA <= 0) {
+            continue;
           }
-          light *= 255;
-          image.setRGB(x: x.round(), y: y.round(), color: light.toRGB());
+          double power = pow(cosA, figure.optics.power) as double;
+          light +=
+              RGBD(l.color.x * s.x, l.color.y * s.y, l.color.z * s.z) * power;
         }
+        light *= 255;
+        image.setRGB(x: x.round(), y: y.round(), color: light.toRGB());
       }
     }
     return image;
