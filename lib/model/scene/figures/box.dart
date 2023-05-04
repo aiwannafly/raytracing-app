@@ -111,7 +111,7 @@ class Box extends Figure {
       normal = -normal;
     }
     // print('pos: $pos, normal: $normal');
-    return Intersection(pos: pos, normal: normal);
+    return Intersection(pos: pos, normal: normal, t: minT);
   }
 
   bool _isInside(Point3D p) {

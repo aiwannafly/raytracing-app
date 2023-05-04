@@ -103,6 +103,6 @@ class Sphere extends Figure {
     Point3D pos = rayStart + rayDir * t;
     var normal = pos - center;
     normal /= radius;
-    return Intersection(pos: pos, normal: normal);
+    return Intersection(pos: pos, normal: normal, t: t);
   }
 }

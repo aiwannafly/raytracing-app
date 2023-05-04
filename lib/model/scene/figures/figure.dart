@@ -11,8 +11,9 @@ class Optics {
 class Intersection {
   Point3D pos;
   Point3D normal;
+  double t;
 
-  Intersection({required this.pos, required this.normal});
+  Intersection({required this.pos, required this.normal, required this.t});
 }
 
 abstract class Figure {

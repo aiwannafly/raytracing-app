@@ -95,7 +95,7 @@ class SceneFileService {
     return Scene(
         figures: figures,
         lightSources: lightSources,
-        ambientColor: ambientColor);
+        ambient: ambientColor);
   }
 
   Optics _opticsFromLine(String line) {

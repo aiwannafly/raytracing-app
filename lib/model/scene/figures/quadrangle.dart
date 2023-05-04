@@ -50,19 +50,19 @@ class Quadrangle extends Figure {
   @override
   Intersection? intersect({required Point3D rayStart, required Point3D rayDir}) {
     return null;
-    double? t = plane.intersect(rayStart: rayStart, rayDir: rayDir);
-    if (t == null) {
-      return null;
-    }
-    Point3D pos = rayStart + rayDir * t;
-    bool inside = pos >= minPos && pos <= maxPos;
-    if (!inside) {
-      return null;
-    }
-    Point3D normal = plane.normal;
-    if (rayDir.scalarDot(normal) >= 0) {
-      normal = -normal;
-    }
-    return Intersection(pos: pos, normal: normal);
+    // double? t = plane.intersect(rayStart: rayStart, rayDir: rayDir);
+    // if (t == null) {
+    //   return null;
+    // }
+    // Point3D pos = rayStart + rayDir * t;
+    // bool inside = pos >= minPos && pos <= maxPos;
+    // if (!inside) {
+    //   return null;
+    // }
+    // Point3D normal = plane.normal;
+    // if (rayDir.scalarDot(normal) >= 0) {
+    //   normal = -normal;
+    // }
+    // return Intersection(pos: pos, normal: normal);
   }
 }

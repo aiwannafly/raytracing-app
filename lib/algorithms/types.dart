@@ -23,6 +23,18 @@ class Point3D {
     return x == 0 && y == 0 && z == 0;
   }
 
+  bool isBetween(Point3D a, Point3D b) {
+    Point3D minPos = a;
+    Point3D maxPos = b;
+    minPos.x = min(a.x, b.x);
+    minPos.y = min(a.y, b.y);
+    minPos.z = min(a.z, b.z);
+    maxPos.x = max(a.x, b.x);
+    maxPos.y = max(a.y, b.y);
+    maxPos.z = max(a.z, b.z);
+    return minPos <= this && this <= maxPos;
+  }
+
   Point3D operator +(Point3D o) {
     return Point3D(x + o.x, y + o.y, z + o.z);
   }

@@ -67,7 +67,7 @@ class _ScenePageState extends State<ScenePage> {
         third: Point3D(5, 2, 9),
         optics: optics));
     scene = Scene(
-        figures: objects, lightSources: [], ambientColor: Point3D(1, 1, 1));
+        figures: objects, lightSources: [], ambient: Point3D(1, 1, 1));
     keyboardFocusNode.requestFocus();
     zNearScale.addListener(updateZNear);
     yRotAngle.addListener(updateView);

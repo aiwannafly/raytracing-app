@@ -54,7 +54,7 @@ class Triangle extends Figure {
     if (rayDir.scalarDot(normal) >= 0) {
       normal = -normal;
     }
-    return Intersection(pos: pos, normal: normal);
+    return Intersection(pos: pos, normal: normal, t: t);
   }
 
   double _getTriangleArea(Point3D a, Point3D b, Point3D c) {
