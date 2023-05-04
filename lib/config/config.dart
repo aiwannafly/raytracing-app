@@ -5,11 +5,11 @@ class Config {
   static const borderRadius = BorderRadius.all(Radius.circular(defaultRadius));
   static const iconColor = Colors.black87;
   static const menuColor = Color(0xFFF5EDEB);
-  static const backIconColor = Color(0xFFfff5f2);
-  static const hoverColor = Color(0xFFACC2CB);
+  static final backIconColor = Colors.grey.shade100;
+  static final hoverColor = Colors.grey.shade300;
   static const seedColor = Colors.orange;
   static final backColor = Colors.grey.shade200; // Color(0xFF070824);
-  static const primaryColor = Colors.blueAccent;
+  static const primaryColor = Colors.orangeAccent;
   static const padding = 10.0;
   static const iconSize = 25.0;
   static const paddingAll = EdgeInsets.all(padding);

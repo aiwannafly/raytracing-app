@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:icg_raytracing/pages/scene_page.dart';
 
-import 'config/widget_config.dart';
+import 'config/config.dart';
 
 class ICGRaytracingApp extends StatelessWidget {
   const ICGRaytracingApp({super.key});

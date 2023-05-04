@@ -8,10 +8,20 @@ import '../scene/figures/figure.dart';
 
 enum Quality { rough, normal, fine }
 
+extension on Quality {
+  String get name {
+    switch (this) {
+      case Quality.rough: return "Rough";
+      case Quality.normal: return "Normal";
+      case Quality.fine: return "Fine";
+    }
+  }
+}
+
 class RenderSettings {
-  final Point3D backgroundColor;
+  Point3D backgroundColor;
   double gamma;
-  int tracingDepth;
+  int depth;
   Quality quality;
 
   late Point3D eye;
@@ -45,7 +55,7 @@ class RenderSettings {
   RenderSettings(
       {required this.backgroundColor,
       required this.gamma,
-      required this.tracingDepth,
+      required this.depth,
       required this.quality,
       required this.eye,
       required this.view,
@@ -58,7 +68,7 @@ class RenderSettings {
   RenderSettings.fromScene(
       {required Scene scene,
       required this.quality,
-      required this.tracingDepth,
+      required this.depth,
       required this.backgroundColor,
       required this.gamma,
       required double desiredWidth,

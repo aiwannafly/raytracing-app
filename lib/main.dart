@@ -6,22 +6,21 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 /*
   TODO:
    - add rotation around view with use of a mouse
-   - turn select view and render into radio buttons
    - fix wire scene graphics artefacts
    - add support of saving wire scene pictures, rendered pictures
-   - add render settings menu
    - add render settings file support
    - add error handling for .scene and .render files
    - parallelize process of ray tracing
    - add gamma correction
-   - speed up and optimize ray tracing
    - add different quality levels of rendering
+   - add render settings menu
    - create fine testing data
+   - speed up and optimize ray tracing
  */
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (!kIsWeb) {
-    await DesktopWindow.setMinWindowSize(const Size(1000, 600));
+    await DesktopWindow.setMinWindowSize(const Size(1000, 700));
   }
   runApp(const ICGRaytracingApp());
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../config/widget_config.dart';
+import '../config/config.dart';
 
 class TraceProgressIndicator extends StatefulWidget {
   const TraceProgressIndicator(

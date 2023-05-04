@@ -1,7 +1,6 @@
 import 'dart:isolate';
 import 'dart:math';
 
-import 'package:flutter/cupertino.dart';
 import 'package:icg_raytracing/algorithms/bmp.dart';
 import 'package:icg_raytracing/algorithms/rgb.dart';
 import 'package:icg_raytracing/algorithms/transform_3d.dart';
@@ -46,6 +45,15 @@ class RenderData {
       this.zRotAngle = 0,
       this.yRotAngle = 0,
       required this.sendPort});
+}
+
+Future<BMPImage> callRender(RenderData data) async {
+  return await RenderAlgorithms().renderScene(
+      scene: data.scene,
+      settings: data.settings,
+      width: data.width,
+      height: data.height,
+      statusPort: data.sendPort);
 }
 
 class RenderAlgorithms {
@@ -202,6 +210,7 @@ class RenderAlgorithms {
     RGB backRGB = RGB(backColor.x.round(), backColor.y.round(), backColor.z.round());
     backRGB.normalize();
     int count = 0;
+    int sendFreq = width.round() * height.round() ~/ 200;
     for (double y = 0; y < height; y++) {
       for (double x = 0; x < width; x++) {
         Point3D scenePoint = T3D().apply(Point3D(x, y, z), invMatrix);
@@ -212,9 +221,11 @@ class RenderAlgorithms {
             rDir: rDir,
             settings: settings,
             scene: scene,
-            depth: settings.tracingDepth);
+            depth: settings.depth);
         count++;
-        statusPort.send(count);
+        if (count % sendFreq == 0) {
+          statusPort.send(count);
+        }
         if (trace == null) {
           image.setRGB(x: x.round(), y: y.round(), color: backRGB);
           continue;
