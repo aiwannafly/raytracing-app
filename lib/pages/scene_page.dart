@@ -38,6 +38,7 @@ class ScenePage extends StatefulWidget {
 class _ScenePageState extends State<ScenePage> {
   late Scene scene;
   late RenderSettings settings;
+  bool initializedEye = false;
   final zNearScale = ValueNotifier(1.0);
   late double zNear;
   final keyboardFocusNode = FocusNode();
@@ -46,6 +47,8 @@ class _ScenePageState extends State<ScenePage> {
   int prevY = 0;
   int startDx = 0;
   int startDy = 0;
+  int pixelsCount = 1000;
+
   bool dragJustStarted = false;
   static final zRotAngle = ValueNotifier(0);
   static final yRotAngle = ValueNotifier(0);
@@ -87,9 +90,14 @@ class _ScenePageState extends State<ScenePage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     updateRenderSettings();
+    initializedEye = true;
   }
 
   void updateRenderSettings() {
+    Point3D? oldEye;
+    if (initializedEye) {
+      oldEye = settings.eye;
+    }
     settings = RenderSettings.fromScene(
         scene: scene,
         quality: Quality.normal,
@@ -98,6 +106,9 @@ class _ScenePageState extends State<ScenePage> {
         gamma: 1,
         desiredWidth: ScenePage.areaWidth(context),
         desiredHeight: ScenePage.areaHeight(context));
+    if (oldEye != null) {
+      settings.eye = oldEye;
+    }
     zNear = settings.zNear;
   }
 
@@ -193,7 +204,8 @@ class _ScenePageState extends State<ScenePage> {
 
   Widget mainContent(BuildContext context) {
     if (image != null) {
-      return Image.memory(image!.bytes);
+      return ClipRRect(
+          borderRadius: Config.borderRadius, child: Image.memory(image!.bytes));
     }
     return Stack(
       children: [
@@ -224,12 +236,11 @@ class _ScenePageState extends State<ScenePage> {
                 alignment: Alignment.center,
                 height: 150,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(.8),
-                  borderRadius: Config.borderRadius
-                ),
+                    color: Colors.white.withOpacity(.8),
+                    borderRadius: Config.borderRadius),
                 width: Config.pageWidth(context) * .6,
                 child: TraceProgressIndicator(
-                    current: currentTrace, desired: width.round() * height.round()),
+                    current: currentTrace, desired: pixelsCount),
               ),
             ))
       ],
@@ -248,7 +259,9 @@ class _ScenePageState extends State<ScenePage> {
   }
 
   void init() {
+    initializedEye = false;
     updateRenderSettings();
+    initializedEye = true;
     yRotAngle.value = 0;
     zRotAngle.value = 0;
     setState(() {
@@ -260,6 +273,7 @@ class _ScenePageState extends State<ScenePage> {
     setState(() {
       currentTrace.value++;
     });
+    pixelsCount = width.round() * height.round();
     var receivePort = ReceivePort();
     compute(
             callRender,
