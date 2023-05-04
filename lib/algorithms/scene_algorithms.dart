@@ -31,37 +31,30 @@ class SceneAlgorithms {
     List<Section> result = [];
     double w = sceneWidth / 2;
     double h = sceneHeight / 2;
-    Matrix transformMatrix =
-        T3D().getScaleMatrix(scaleX: w, scaleY: h, scaleZ: 1) *
-            T3D().getTranslationMatrix(trX: 1, trY: 1, trZ: 0) *
-            T3D().getVisibleAreaMatrix(
-                zNear: settings.zNear,
-                zFar: settings.zFar,
-                sWidth: settings.planeWidth,
-                sHeight: settings.planeHeight) *
-            T3D().getCamMatrix(
-                eye: settings.eye, view: settings.view, up: settings.up);
-    // Matrix rotMatrix =
-    //     Transform3D().getRotationMatrixZ((zRotAngle + 1) * pi / 180) *
-    //         Transform3D().getRotationMatrixY(yRotAngle * pi / 180);
-    Matrix rotMatrix = Matrix.identity(4);
+    Matrix transformMatrix = T3D()
+            .getScaleMatrix(scaleX: w, scaleY: h, scaleZ: 1) *
+        T3D().getTranslationMatrix(trX: 1, trY: 1, trZ: 0) *
+        T3D().getVisibleAreaMatrix(
+            zNear: settings.zNear,
+            zFar: settings.zFar,
+            sWidth: settings.planeWidth,
+            sHeight: settings.planeHeight) *
+        T3D().getCamMatrix(
+            eye: settings.eye, view: settings.view, up: settings.up);
     Point3D dir = settings.eye - settings.view;
     for (Figure object in scene.figures) {
       for (Section section in object.sections) {
-        Section rotated = Section(
-            T3D().apply(section.start, rotMatrix),
-            T3D().apply(section.end, rotMatrix));
-        Point3D sDir = settings.eye - rotated.start;
+        Point3D sDir = settings.eye - section.start;
         if (sDir.scalarDot(dir) <= 0) {
           continue;
         }
-        sDir = settings.eye - rotated.end;
+        sDir = settings.eye - section.end;
         if (sDir.scalarDot(dir) <= 0) {
           continue;
         }
         Section transformed = Section(
-            T3D().apply(rotated.start, transformMatrix),
-            T3D().apply(rotated.end, transformMatrix));
+            T3D().apply(section.start, transformMatrix),
+            T3D().apply(section.end, transformMatrix));
         result.add(transformed);
       }
     }
@@ -81,18 +74,18 @@ class SceneAlgorithms {
       required double sceneHeight}) {
     double w = sceneWidth / 2;
     double h = sceneHeight / 2;
-    Matrix transformMatrix =
-        T3D().getScaleMatrix(scaleX: w, scaleY: h, scaleZ: 1) *
-            T3D().getTranslationMatrix(trX: 1, trY: 1, trZ: 0) *
-            T3D().getVisibleAreaMatrix(
-                zNear: settings.zNear,
-                zFar: settings.zFar,
-                sWidth: settings.planeWidth,
-                sHeight: settings.planeHeight) *
-            T3D().getCamMatrix(
-                eye: settings.eye, view: settings.view, up: settings.up) *
-            T3D().getRotationMatrixZ((zRotAngle + 1) * pi / 180) *
-            T3D().getRotationMatrixY(yRotAngle * pi / 180);
+    Matrix transformMatrix = T3D()
+            .getScaleMatrix(scaleX: w, scaleY: h, scaleZ: 1) *
+        T3D().getTranslationMatrix(trX: 1, trY: 1, trZ: 0) *
+        T3D().getVisibleAreaMatrix(
+            zNear: settings.zNear,
+            zFar: settings.zFar,
+            sWidth: settings.planeWidth,
+            sHeight: settings.planeHeight) *
+        T3D().getCamMatrix(
+            eye: settings.eye, view: settings.view, up: settings.up) *
+        T3D().getRotationMatrixZ((zRotAngle + 1) * pi / 180) *
+        T3D().getRotationMatrixY(yRotAngle * pi / 180);
     Matrix invMatrix = transformMatrix.inverse();
     List<Point3D> res = [];
     for (Point3D p in points) {

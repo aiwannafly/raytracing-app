@@ -8,6 +8,13 @@ class Optics {
   Optics({required this.diff, required this.sight, required this.power});
 }
 
+class Intersection {
+  Point3D pos;
+  Point3D normal;
+
+  Intersection({required this.pos, required this.normal});
+}
+
 abstract class Figure {
   final Optics optics;
   final List<Section> sections = [];
@@ -17,9 +24,7 @@ abstract class Figure {
 
   Figure({required this.optics});
 
-  Point3D? intersect({required Point3D rayStart, required Point3D rayDir});
-
-  Point3D? intersectNormal({required Point3D rayStart, required Point3D rayDir});
+  Intersection? intersect({required Point3D rayStart, required Point3D rayDir});
 
   List<Section> split(List<Section> baseSections, [double stride = 20]) {
     List<Section> sections = [];

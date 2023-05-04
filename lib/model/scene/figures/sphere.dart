@@ -82,7 +82,7 @@ class Sphere extends Figure {
   }
 
   @override
-  Point3D? intersect({required Point3D rayStart, required Point3D rayDir}) {
+  Intersection? intersect({required Point3D rayStart, required Point3D rayDir}) {
     var oc = center - rayStart;
     double oc2 = oc.scalarDot(oc);
     bool inside = oc2 <= radius2;
@@ -100,17 +100,9 @@ class Sphere extends Figure {
     } else {
       t = t1 - sqrt(t2);
     }
-    return rayStart + rayDir * t;
-  }
-
-  @override
-  Point3D? intersectNormal({required Point3D rayStart, required Point3D rayDir}) {
-    Point3D? int = intersect(rayStart: rayStart, rayDir: rayDir);
-    if (int == null) {
-      return null;
-    }
-    var n = int - center;
-    n /= radius;
-    return n;
+    Point3D pos = rayStart + rayDir * t;
+    var normal = pos - center;
+    normal /= radius;
+    return Intersection(pos: pos, normal: normal);
   }
 }

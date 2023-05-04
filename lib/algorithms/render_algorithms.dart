@@ -29,16 +29,6 @@ class RenderAlgorithms {
     BMPImage image = BMPImage(width: width.round(), height: height.round());
     double w = width / 2;
     double h = height / 2;
-    Matrix transformMatrix = T3D()
-            .getScaleMatrix(scaleX: w, scaleY: h, scaleZ: 1) *
-        T3D().getTranslationMatrix(trX: 1, trY: 1, trZ: 0) *
-        T3D().getVisibleAreaMatrix(
-            zNear: settings.zNear,
-            zFar: settings.zFar,
-            sWidth: settings.planeWidth,
-            sHeight: settings.planeHeight) *
-        T3D().getCamMatrix(
-            eye: settings.eye, view: settings.view, up: settings.up);
     Matrix invMatrix = T3D().getInvCamMatrix(
             eye: settings.eye, view: settings.view, up: settings.up) *
         T3D()
@@ -54,30 +44,40 @@ class RenderAlgorithms {
     double z = settings.zNear;
     Point3D rayStart = settings.eye;
 
+    // Point3D start = Point3D(0, 0, 0);
+    // Point3D dir = Point3D(0, 0, 1);
+    // for (Figure f in scene.figures) {
+    //   Intersection? int = f.intersect(rayStart: start, rayDir: dir);
+    //   if (int == null) {
+    //     continue;
+    //   }
+    //   print('figure: ${f.minPos} ${f.maxPos}');
+    //   print('int pos: ${int.pos}');
+    // }
+
     for (double y = 0; y < height; y++) {
       for (double x = 0; x < width; x++) {
         Point3D scenePoint = T3D().apply(Point3D(x, y, z), invMatrix);
         Point3D rayDir = scenePoint - rayStart;
         rayDir /= rayDir.norm();
         for (Figure figure in scene.figures) {
-          Point3D? intNormal =
-              figure.intersectNormal(rayStart: rayStart, rayDir: rayDir);
-          if (intNormal == null) {
+          // print('figure: ${figure.minPos} ${figure.maxPos}');
+          Intersection? int = figure.intersect(rayStart: rayStart, rayDir: rayDir);
+          if (int == null) {
             continue;
           }
-          Point3D int = figure.intersect(rayStart: rayStart, rayDir: rayDir)!;
-          Point3D view = settings.eye - int;
+          Point3D view = settings.eye - int.pos;
           view /= view.norm();
           RGBDouble light = RGBDouble(
               scene.ambientColor.x, scene.ambientColor.y, scene.ambientColor.z);
           for (LightSource l in scene.lightSources) {
-            var lDir = l.pos - int;
+            var lDir = l.pos - int.pos;
             lDir /= lDir.norm();
-            var cosO = intNormal.scalarDot(lDir);
+            var cosO = int.normal.scalarDot(lDir);
             if (cosO <= 0) {
               continue;
             }
-            Point3D reflected = intNormal * 2 * cosO - lDir;
+            Point3D reflected = int.normal * 2 * cosO - lDir;
             var d = figure.optics.diff;
             light +=
                 RGBDouble(l.color.x * d.x, l.color.y * d.y, l.color.z * d.z) *

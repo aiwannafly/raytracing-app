@@ -32,12 +32,7 @@ class Triangle extends Figure {
   }
 
   @override
-  Point3D? intersect({required Point3D rayStart, required Point3D rayDir}) {
-    return null;
-  }
-
-  @override
-  Point3D? intersectNormal({required Point3D rayStart, required Point3D rayDir}) {
+  Intersection? intersect({required Point3D rayStart, required Point3D rayDir}) {
     return null;
   }
 }

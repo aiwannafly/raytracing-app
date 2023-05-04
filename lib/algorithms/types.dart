@@ -19,6 +19,10 @@ class Point3D {
     return "{$x, $y, $z}";
   }
 
+  bool isZero() {
+    return x == 0 && y == 0 && z == 0;
+  }
+
   Point3D operator +(Point3D o) {
     return Point3D(x + o.x, y + o.y, z + o.z);
   }
@@ -41,6 +45,14 @@ class Point3D {
 
   bool operator <(Point3D o) {
     return x < o.x && y < o.y && z < o.z;
+  }
+
+  bool operator >=(Point3D o) {
+    return x >= o.x && y >= o.y && z >= o.z;
+  }
+
+  bool operator <=(Point3D o) {
+    return x <= o.x && y <= o.y && z <= o.z;
   }
 
   Point3D operator -() {

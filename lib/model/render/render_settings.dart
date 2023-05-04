@@ -97,13 +97,13 @@ class RenderSettings {
     zFar = maxPos.x - eye.x + overallSizes.x / 2;
     planeHeight = max(overallSizes.y, overallSizes.x * (desiredHeight) / desiredWidth);
     planeWidth = planeHeight * (desiredWidth / desiredHeight);
-    for (Figure object in scene.figures) {
-      minPos.x = min(minPos.x, object.minPos.x);
-      minPos.y = min(minPos.y, object.minPos.y);
-      minPos.z = min(minPos.z, object.minPos.z);
-      maxPos.x = max(maxPos.x, object.maxPos.x);
-      maxPos.y = max(maxPos.y, object.maxPos.y);
-      maxPos.z = max(maxPos.z, object.maxPos.z);
+    for (Figure f in scene.figures) {
+      minPos.x = min(minPos.x, f.minPos.x);
+      minPos.y = min(minPos.y, f.minPos.y);
+      minPos.z = min(minPos.z, f.minPos.z);
+      maxPos.x = max(maxPos.x, f.maxPos.x);
+      maxPos.y = max(maxPos.y, f.maxPos.y);
+      maxPos.z = max(maxPos.z, f.maxPos.z);
     }
   }
 }
