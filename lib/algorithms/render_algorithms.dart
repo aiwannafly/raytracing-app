@@ -57,7 +57,7 @@ Future<BMPImage> callRender(RenderData data) async {
 class RenderAlgorithms {
   RenderAlgorithms._internal();
 
-  static const epsilon = 0.001;
+  static const epsilon = 0.01;
 
   factory RenderAlgorithms() {
     return RenderAlgorithms._internal();
@@ -157,7 +157,7 @@ class RenderAlgorithms {
       if (cosO <= 0) {
         continue;
       }
-      var fade = 1 / lDist;
+      var fade = 1 / (lDist + 1);
       Point3D reflected = int.normal * 2 * cosO - lDir;
       var d = figure.optics.diff * fade;
       light += RGBD(l.color.x * d.x, l.color.y * d.y, l.color.z * d.z) * cosO;
@@ -172,6 +172,9 @@ class RenderAlgorithms {
     if (depth > 0) {
       rDir = -rDir;
       var cosO = int.normal.scalarDot(rDir);
+      if (cosO <= 0) {
+        return _Trace(light: light, dist: closest.dist);
+      }
       Point3D reflectedDir = int.normal * 2 * cosO - rDir;
       var rTrace = _traceRay(
           rStart: int.pos + reflectedDir * epsilon,
@@ -179,12 +182,14 @@ class RenderAlgorithms {
           settings: settings,
           scene: scene,
           depth: depth - 1);
-      if (rTrace != null) {
-        var fade = 1 / rTrace.dist;
-        var s = figure.optics.sight * fade;
-        light += RGBD(rTrace.light.red * s.x, rTrace.light.green * s.y,
-            rTrace.light.blue * s.z);
+      if (rTrace == null) {
+        return _Trace(light: light, dist: closest.dist);
       }
+      var fade = 1 / (rTrace.dist + 1);
+      var s = figure.optics.sight * fade;
+      light *= (1 - fade);
+      light += RGBD(rTrace.light.red * s.x, rTrace.light.green * s.y,
+          rTrace.light.blue * s.z);
     }
     return _Trace(light: light, dist: closest.dist);
   }
