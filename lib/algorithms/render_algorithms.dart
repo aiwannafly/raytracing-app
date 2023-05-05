@@ -194,86 +194,62 @@ class RenderAlgorithms {
       required double areaWidth,
       required double areaHeight,
       required SendPort statusPort}) async {
+    var t1 = DateTime.now();
     int width = areaWidth.round();
     int height = areaHeight.round();
-    while (width % 4 != 0) {
+    while (width % 8 != 0) {
       width++;
     }
-    while (height % 4 != 0) {
+    while (height % 8 != 0) {
       height++;
     }
-
     BMPImage image = BMPImage(width: width, height: height);
     Matrix invMatrix = _getInvSceneMatrix(
         scene: scene, settings: settings, width: areaWidth, height: areaHeight);
-    double z = settings.zNear;
-    Point3D rStart = settings.eye;
     int count = 0;
     int sendFreq = width * height ~/ 200;
-    var t2 = DateTime.now();
-    // for (int y = 0; y < height; y++) {
-    //   for (int x = 0; x < width; x++) {
-    //     Point3D scenePoint =
-    //     T3D().apply(Point3D(x.toDouble(), y.toDouble(), z), invMatrix);
-    //     Point3D rDir = scenePoint - rStart;
-    //     rDir /= rDir.norm();
-    //     _Trace? trace = _traceRay(
-    //         rStart: rStart,
-    //         rDir: rDir,
-    //         settings: settings,
-    //         scene: scene,
-    //         depth: settings.depth);
-    //     count++;
-    //     if (count % sendFreq == 0) {
-    //       statusPort.send(count);
-    //     }
-    //     if (trace == null) {
-    //       image.setRGB(x: x, y: y, color: settings.backgroundColor);
-    //       continue;
-    //     }
-    //     trace.light ^= 1 / settings.gamma;
-    //     trace.light *= 255;
-    //     image.setRGB(x: x, y: y, color: trace.light.toRGB());
-    //   }
-    // }
-    IntPoint2D extent = IntPoint2D(500, 500);
-    var c1 = compute(
-        _callTracePart,
-        _TracePartArgs(
-            settings: settings,
-            invMatrix: invMatrix,
-            scene: scene,
-            rStart: rStart,
-            offset: IntPoint2D(0, 0),
-            extent: extent,
-            statusPort: statusPort));
-    // var c2 = compute(
-    //     _callTracePart,
-    //     _TracePartArgs(
-    //         settings: settings,
-    //         invMatrix: invMatrix,
-    //         scene: scene,
-    //         rStart: rStart,
-    //         offset: IntPoint2D(0, height ~/ 2),
-    //         extent: extent,
-    //         statusPort: statusPort));
+    int xSplit = 2;
+    int ySplit = 2;
+    int xStep = width ~/ xSplit;
+    int yStep = height ~/ ySplit;
+    IntPoint2D extent = IntPoint2D(xStep, yStep);
+    List<Future<_TracePartRes>> tasks = [];
     void fillPart(_TracePartRes r) {
       for (int y = r.offset.y; y < r.extent.y + r.offset.y; y++) {
         for (int x = r.offset.x; x < r.extent.x + r.offset.x; x++) {
-          image.setRGB(x: x, y: y, color: r.pixels[y - r.offset.y][x - r.offset.x]);
+          image.setRGB(
+              x: x,
+              y: y,
+              color: r.image.getRGB(x: x - r.offset.x, y: y - r.offset.y)!);
         }
       }
     }
-    c1.then((r) {
-      fillPart(r);
-    });
-    // c2.then((r) {
-    //   fillPart(r);
-    // });
-    await c1;
-    // await c2;
-    var t3 = DateTime.now();
-    print(t3.difference(t2).inMilliseconds);
+    for (int i = 0; i < xSplit; i++) {
+      for (int j = 0; j < ySplit; j++) {
+        var port = ReceivePort();
+        var c = compute(
+            _callTracePart,
+            _TracePartArgs(
+                settings: settings,
+                invMatrix: invMatrix,
+                scene: scene,
+                sendFreq: sendFreq,
+                offset: IntPoint2D(i * xStep, j * yStep),
+                extent: extent,
+                statusPort: port.sendPort));
+        c.then(fillPart);
+        tasks.add(c);
+        port.listen((message) {
+          count += sendFreq;
+          statusPort.send(count);
+        });
+      }
+    }
+    for (var task in tasks) {
+      await task;
+    }
+    var t2 = DateTime.now();
+    print('time to compute: ${t2.difference(t1).inMilliseconds} millis');
     return image;
   }
 
@@ -281,13 +257,14 @@ class RenderAlgorithms {
       {required RenderSettings settings,
       required Matrix invMatrix,
       required Scene scene,
-      required Point3D rStart,
       required IntPoint2D offset,
       required IntPoint2D extent,
+      required int sendFreq,
       required SendPort statusPort}) async {
-    List<List<RGB>> pixels =
-        List.filled(extent.y, List.filled(extent.x, settings.backgroundColor));
+    BMPImage image = BMPImage(width: extent.x, height: extent.y);
+    Point3D rStart = settings.eye;
     double z = settings.zNear;
+    int count = 0;
     for (int y = offset.y; y < extent.y + offset.y; y++) {
       for (int x = offset.x; x < extent.x + offset.x; x++) {
         Point3D scenePoint =
@@ -300,43 +277,49 @@ class RenderAlgorithms {
             settings: settings,
             scene: scene,
             depth: settings.depth);
+        count++;
+        if (count == sendFreq) {
+          count = 0;
+          statusPort.send(1);
+        }
         if (trace == null) {
           continue;
         }
         trace.light ^= 1 / settings.gamma;
         trace.light *= 255;
-        pixels[y - offset.y][x - offset.x] = trace.light.toRGB();
+        image.setRGB(
+            x: x - offset.x, y: y - offset.y, color: trace.light.toRGB());
       }
     }
-    return _TracePartRes(pixels: pixels, offset: offset, extent: extent);
+    return _TracePartRes(image: image, offset: offset, extent: extent);
   }
 }
 
 class _TracePartRes {
-  final List<List<RGB>> pixels;
+  BMPImage image;
   final IntPoint2D offset;
   final IntPoint2D extent;
 
   _TracePartRes(
-      {required this.pixels, required this.offset, required this.extent});
+      {required this.image, required this.offset, required this.extent});
 }
 
 class _TracePartArgs {
   final RenderSettings settings;
   final Matrix invMatrix;
   final Scene scene;
-  final Point3D rStart;
   final IntPoint2D offset;
   final IntPoint2D extent;
   final SendPort statusPort;
+  final int sendFreq;
 
   _TracePartArgs(
       {required this.settings,
       required this.invMatrix,
       required this.scene,
-      required this.rStart,
       required this.offset,
       required this.extent,
+      required this.sendFreq,
       required this.statusPort});
 }
 
@@ -345,8 +328,8 @@ Future<_TracePartRes> _callTracePart(_TracePartArgs a) async {
       settings: a.settings,
       invMatrix: a.invMatrix,
       scene: a.scene,
-      rStart: a.rStart,
       offset: a.offset,
       extent: a.extent,
+      sendFreq: a.sendFreq,
       statusPort: a.statusPort);
 }
