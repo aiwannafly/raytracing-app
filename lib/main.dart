@@ -5,12 +5,12 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 /*
   TODO:
-   - fix wire scene graphics artefacts
-   - add error handling for .scene and .render files
    - parallelize process of ray tracing
    - add different quality levels of rendering
    - create fine testing data
    - speed up and optimize ray tracing
+   - add quadrangles tracing
+   - check reflections of rays computation
  */
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,5 +1,12 @@
 import 'dart:math';
 
+class IntPoint2D {
+  int x;
+  int y;
+
+  IntPoint2D(this.x, this.y);
+}
+
 class Point2D {
   double x;
   double y;

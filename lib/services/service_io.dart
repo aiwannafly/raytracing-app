@@ -26,7 +26,7 @@ class ServiceIO {
   }
 
   static void showMessage(String text, BuildContext context,
-      [bool noShadow = false, double height = 50]) {
+      [bool noShadow = false, double height = 70]) {
     showDialog(
         barrierColor: noShadow ? Colors.transparent : Colors.black54,
         context: context,

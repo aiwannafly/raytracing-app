@@ -217,26 +217,26 @@ class _ScenePageState extends State<ScenePage> {
         ),
         hasScene
             ? MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onPanDown: onPressed,
-                  onPanUpdate: onDragged,
-                  child: ClipRRect(
-                      child: FittedBox(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onPanDown: onPressed,
+              onPanUpdate: onDragged,
+              child: ClipRRect(
+                  child: FittedBox(
                     child: CustomPaint(
                       size: Size(width, height),
                       painter:
-                          WireScenePainter(sections: transformedSections()),
+                      WireScenePainter(sections: transformedSections()),
                     ),
                   )),
-                ))
+            ))
             : const SizedBox(),
         image != null
             ? Center(
-                child: ClipRRect(
-                    borderRadius: Config.borderRadius,
-                    child: Image.memory(image!.bytes)),
-              )
+          child: ClipRRect(
+              borderRadius: Config.borderRadius,
+              child: Image.memory(image!.bytes)),
+        )
             : const SizedBox(),
         Visibility(
             visible: currentTrace.value > 0,
@@ -269,10 +269,17 @@ class _ScenePageState extends State<ScenePage> {
       ServiceIO.showMessage("Scene is not selected", context);
       return;
     }
-    RenderSettings? newSettings = await SceneFileService().openSettingsFile();
+    RenderSettings? newSettings;
+    try {
+      newSettings =
+      await SceneFileService().openSettingsFile();
+    } catch (e) {
+      ServiceIO.showMessage("Failed to load settings: $e", context);
+      return;
+    }
     if (newSettings != null) {
       setState(() {
-        settings = newSettings;
+        settings = newSettings!;
       });
     }
   }
@@ -299,7 +306,12 @@ class _ScenePageState extends State<ScenePage> {
   }
 
   void openScene() async {
-    Scene? res = await SceneFileService().openSceneFile();
+    Scene? res;
+    try {
+      res = await SceneFileService().openSceneFile();
+    } catch (e) {
+      ServiceIO.showMessage('Failed to open the scene: $e}', context);
+    }
     if (res == null) {
       return;
     }
@@ -316,6 +328,9 @@ class _ScenePageState extends State<ScenePage> {
           gamma: 1,
           desiredWidth: ScenePage.areaWidth(context),
           desiredHeight: ScenePage.areaHeight(context));
+      // a little rotation
+      settings.eye =
+          T3D().apply(settings.eye, T3D().getRotationMatrixZ(pi / 180));
       zNear = settings.zNear;
     });
   }
@@ -346,13 +361,13 @@ class _ScenePageState extends State<ScenePage> {
     pixelsCount = width.round() * height.round();
     var receivePort = ReceivePort();
     compute(
-            callRender,
-            RenderData(
-                scene: scene,
-                settings: settings,
-                width: width,
-                height: height,
-                sendPort: receivePort.sendPort))
+        callRender,
+        RenderData(
+            scene: scene,
+            settings: settings,
+            width: width,
+            height: height,
+            sendPort: receivePort.sendPort))
         .then((res) {
       image = res;
       setState(() {
@@ -472,9 +487,10 @@ class _ScenePageState extends State<ScenePage> {
       dy = -dy;
     }
     setState(() {
-      settings.eye =
-          T3D().apply(prevEye, T3D().getRotationMatrixZ(dx * pi / 180) *
-          T3D().getRotationMatrixY(dy * pi / 180));
+      settings.eye = T3D().apply(
+          prevEye,
+          T3D().getRotationMatrixZ(dx * pi / 180) *
+              T3D().getRotationMatrixY(dy * pi / 180));
     });
   }
 }
