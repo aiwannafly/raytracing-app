@@ -1,6 +1,8 @@
+import 'dart:ffi';
 import 'dart:isolate';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:icg_raytracing/algorithms/bmp.dart';
 import 'package:icg_raytracing/algorithms/rgb.dart';
 import 'package:icg_raytracing/algorithms/transform_3d.dart';
@@ -209,8 +211,85 @@ class RenderAlgorithms {
     int count = 0;
     int sendFreq = width * height ~/ 200;
     var t2 = DateTime.now();
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
+    // for (int y = 0; y < height; y++) {
+    //   for (int x = 0; x < width; x++) {
+    //     Point3D scenePoint =
+    //     T3D().apply(Point3D(x.toDouble(), y.toDouble(), z), invMatrix);
+    //     Point3D rDir = scenePoint - rStart;
+    //     rDir /= rDir.norm();
+    //     _Trace? trace = _traceRay(
+    //         rStart: rStart,
+    //         rDir: rDir,
+    //         settings: settings,
+    //         scene: scene,
+    //         depth: settings.depth);
+    //     count++;
+    //     if (count % sendFreq == 0) {
+    //       statusPort.send(count);
+    //     }
+    //     if (trace == null) {
+    //       image.setRGB(x: x, y: y, color: settings.backgroundColor);
+    //       continue;
+    //     }
+    //     trace.light ^= 1 / settings.gamma;
+    //     trace.light *= 255;
+    //     image.setRGB(x: x, y: y, color: trace.light.toRGB());
+    //   }
+    // }
+    IntPoint2D extent = IntPoint2D(500, 500);
+    var c1 = compute(
+        _callTracePart,
+        _TracePartArgs(
+            settings: settings,
+            invMatrix: invMatrix,
+            scene: scene,
+            rStart: rStart,
+            offset: IntPoint2D(0, 0),
+            extent: extent,
+            statusPort: statusPort));
+    // var c2 = compute(
+    //     _callTracePart,
+    //     _TracePartArgs(
+    //         settings: settings,
+    //         invMatrix: invMatrix,
+    //         scene: scene,
+    //         rStart: rStart,
+    //         offset: IntPoint2D(0, height ~/ 2),
+    //         extent: extent,
+    //         statusPort: statusPort));
+    void fillPart(_TracePartRes r) {
+      for (int y = r.offset.y; y < r.extent.y + r.offset.y; y++) {
+        for (int x = r.offset.x; x < r.extent.x + r.offset.x; x++) {
+          image.setRGB(x: x, y: y, color: r.pixels[y - r.offset.y][x - r.offset.x]);
+        }
+      }
+    }
+    c1.then((r) {
+      fillPart(r);
+    });
+    // c2.then((r) {
+    //   fillPart(r);
+    // });
+    await c1;
+    // await c2;
+    var t3 = DateTime.now();
+    print(t3.difference(t2).inMilliseconds);
+    return image;
+  }
+
+  Future<_TracePartRes> _traceImagePart(
+      {required RenderSettings settings,
+      required Matrix invMatrix,
+      required Scene scene,
+      required Point3D rStart,
+      required IntPoint2D offset,
+      required IntPoint2D extent,
+      required SendPort statusPort}) async {
+    List<List<RGB>> pixels =
+        List.filled(extent.y, List.filled(extent.x, settings.backgroundColor));
+    double z = settings.zNear;
+    for (int y = offset.y; y < extent.y + offset.y; y++) {
+      for (int x = offset.x; x < extent.x + offset.x; x++) {
         Point3D scenePoint =
             T3D().apply(Point3D(x.toDouble(), y.toDouble(), z), invMatrix);
         Point3D rDir = scenePoint - rStart;
@@ -221,86 +300,53 @@ class RenderAlgorithms {
             settings: settings,
             scene: scene,
             depth: settings.depth);
-        count++;
-        if (count % sendFreq == 0) {
-          statusPort.send(count);
-        }
         if (trace == null) {
-          image.setRGB(x: x, y: y, color: settings.backgroundColor);
           continue;
         }
         trace.light ^= 1 / settings.gamma;
         trace.light *= 255;
-        image.setRGB(x: x, y: y, color: trace.light.toRGB());
+        pixels[y - offset.y][x - offset.x] = trace.light.toRGB();
       }
     }
-    // var a1 = _traceImagePart(
-    //     image: image,
-    //     settings: settings,
-    //     invMatrix: invMatrix,
-    //     scene: scene,
-    //     rStart: rStart,
-    //     yMin: 0,
-    //     yMax: height / 2,
-    //     xMin: 0,
-    //     xMax: width);
-    // var a2 = _traceImagePart(
-    //     image: image,
-    //     settings: settings,
-    //     invMatrix: invMatrix,
-    //     scene: scene,
-    //     rStart: rStart,
-    //     yMin: height / 2,
-    //     yMax: height,
-    //     xMin: 0,
-    //     xMax: width);
-    // await a1.whenComplete(() => a2.whenComplete(() => null));
-    var t3 = DateTime.now();
-    print(t3.difference(t2).inMilliseconds);
-    return image;
+    return _TracePartRes(pixels: pixels, offset: offset, extent: extent);
   }
+}
 
-  /*
-  Так, нужно распараллелить. Есть идея такая: каждую часть
-  картинки определяем через смещение + размер.
-  Результатом работы изолята может быть List<List<RGB>>.
-  Не будут создаваться лишние BMPImage
-   */
-  Future _traceImagePart(
-      {required BMPImage image,
-      required RenderSettings settings,
-      required Matrix invMatrix,
-      required Scene scene,
-      required Point3D rStart,
-      required double yMin,
-      required double yMax,
-      required double xMin,
-      required double xMax}) async {
-    double z = settings.zNear;
-    for (double y = yMin; y < yMax; y++) {
-      for (double x = xMin; x < xMax; x++) {
-        Point3D scenePoint = T3D().apply(Point3D(x, y, z), invMatrix);
-        Point3D rDir = scenePoint - rStart;
-        rDir /= rDir.norm();
-        _Trace? trace = _traceRay(
-            rStart: rStart,
-            rDir: rDir,
-            settings: settings,
-            scene: scene,
-            depth: settings.depth);
-        // count++;
-        // if (count % sendFreq == 0) {
-        //   statusPort.send(count);
-        // }
-        if (trace == null) {
-          image.setRGB(
-              x: x.round(), y: y.round(), color: settings.backgroundColor);
-          continue;
-        }
-        trace.light ^= 1 / settings.gamma;
-        trace.light *= 255;
-        image.setRGB(x: x.round(), y: y.round(), color: trace.light.toRGB());
-      }
-    }
-  }
+class _TracePartRes {
+  final List<List<RGB>> pixels;
+  final IntPoint2D offset;
+  final IntPoint2D extent;
+
+  _TracePartRes(
+      {required this.pixels, required this.offset, required this.extent});
+}
+
+class _TracePartArgs {
+  final RenderSettings settings;
+  final Matrix invMatrix;
+  final Scene scene;
+  final Point3D rStart;
+  final IntPoint2D offset;
+  final IntPoint2D extent;
+  final SendPort statusPort;
+
+  _TracePartArgs(
+      {required this.settings,
+      required this.invMatrix,
+      required this.scene,
+      required this.rStart,
+      required this.offset,
+      required this.extent,
+      required this.statusPort});
+}
+
+Future<_TracePartRes> _callTracePart(_TracePartArgs a) async {
+  return await RenderAlgorithms()._traceImagePart(
+      settings: a.settings,
+      invMatrix: a.invMatrix,
+      scene: a.scene,
+      rStart: a.rStart,
+      offset: a.offset,
+      extent: a.extent,
+      statusPort: a.statusPort);
 }
