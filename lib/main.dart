@@ -5,10 +5,11 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 /*
   TODO:
+   - check reflections of rays computation
    - create fine testing data
    - speed up and optimize ray tracing
    - add quadrangles tracing
-   - check reflections of rays computation
+   - add auto .render file opening
  */
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

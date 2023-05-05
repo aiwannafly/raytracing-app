@@ -170,6 +170,7 @@ class RenderAlgorithms {
       light += RGBD(l.color.x * s.x, l.color.y * s.y, l.color.z * s.z) * power;
     }
     if (depth > 0) {
+      rDir = -rDir;
       var cosO = int.normal.scalarDot(rDir);
       Point3D reflectedDir = int.normal * 2 * cosO - rDir;
       var rTrace = _traceRay(

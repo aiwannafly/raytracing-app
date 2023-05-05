@@ -235,7 +235,7 @@ class _ScenePageState extends State<ScenePage> {
             ? Center(
           child: ClipRRect(
               borderRadius: Config.borderRadius,
-              child: Image.memory(image!.bytes, fit: BoxFit.contain,)),
+              child: Image.memory(image!.bytes,)),
         )
             : const SizedBox(),
         Visibility(
