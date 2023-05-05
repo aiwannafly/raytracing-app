@@ -269,8 +269,7 @@ class RenderAlgorithms {
     int count = 0;
     for (int y = offset.y; y < extent.y + offset.y; y++) {
       for (int x = offset.x; x < extent.x + offset.x; x++) {
-        Point3D scenePoint =
-            T3D().apply(Point3D(x.toDouble(), y.toDouble(), z), invMatrix);
+        Point3D scenePoint = T3D().apply(Point3D(x + .5, y + .5, z), invMatrix);
         Point3D rDir = scenePoint - rStart;
         rDir /= rDir.norm();
         _Trace? trace = _traceRay(
@@ -371,7 +370,7 @@ class RenderAlgorithms {
         for (int i = 0; i < step; i++) {
           for (int j = 0; j < step; j++) {
             Point3D scenePoint = T3D().apply(
-                Point3D(x.toDouble() + j, y.toDouble() + i, z), invMatrix);
+                Point3D(1 / 4 + x + j / 2, 1 / 4 + y + i / 2, z), invMatrix);
             Point3D rDir = scenePoint - rStart;
             rDir /= rDir.norm();
             _Trace? trace = _traceRay(
@@ -390,8 +389,7 @@ class RenderAlgorithms {
         full /= (step * step);
         full ^= 1 / settings.gamma;
         full *= 255;
-        image.setRGB(
-            x: x - offset.x, y: y - offset.y, color: full.toRGB());
+        image.setRGB(x: x - offset.x, y: y - offset.y, color: full.toRGB());
         count++;
         if (count == sendFreq) {
           count = 0;
