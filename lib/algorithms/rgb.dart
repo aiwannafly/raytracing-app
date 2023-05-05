@@ -23,6 +23,10 @@ class RGBD {
     return RGBD(red * a, green * a, blue * a);
   }
 
+  RGBD operator /(int a) {
+    return RGBD(red / a, green / a, blue / a);
+  }
+
   RGBD operator ^(double a) {
     return RGBD(
         pow(red, a) as double, pow(green, a) as double, pow(blue, a) as double);

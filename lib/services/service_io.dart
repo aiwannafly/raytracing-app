@@ -63,7 +63,7 @@ class ServiceIO {
     depth.addListener(() {
       settings.depth = depth.value;
     });
-    RGB color = settings.backgroundColor;
+    RGB color = settings.backColor;
     Color pickerColor = Color.fromRGBO(color.red, color.green, color.blue, 1);
     showDialog(
         context: context,
@@ -119,7 +119,7 @@ class ServiceIO {
                           colorPickerWidth: 150,
                           onColorChanged: (newColor) {
                             pickerColor = newColor;
-                            settings.backgroundColor = RGB(
+                            settings.backColor = RGB(
                                 newColor.red, newColor.green, newColor.blue);
                           },
                         ),

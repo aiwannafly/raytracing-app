@@ -235,7 +235,7 @@ class _ScenePageState extends State<ScenePage> {
             ? Center(
           child: ClipRRect(
               borderRadius: Config.borderRadius,
-              child: Image.memory(image!.bytes)),
+              child: Image.memory(image!.bytes, fit: BoxFit.contain,)),
         )
             : const SizedBox(),
         Visibility(
@@ -324,7 +324,7 @@ class _ScenePageState extends State<ScenePage> {
           scene: scene,
           quality: Quality.normal,
           depth: 3,
-          backgroundColor: RGB(230, 230, 230),
+          backColor: RGB(230, 230, 230),
           gamma: 1,
           desiredWidth: ScenePage.areaWidth(context),
           desiredHeight: ScenePage.areaHeight(context));
@@ -358,7 +358,15 @@ class _ScenePageState extends State<ScenePage> {
       selectViewActive.value = false;
       renderActive.value = false;
     });
-    pixelsCount = width.round() * height.round();
+    int w = width.round();
+    int h = height.round();
+    while (w % 16 != 0) {
+      w++;
+    }
+    while (h % 16 != 0) {
+      h++;
+    }
+    pixelsCount = w * h;
     var receivePort = ReceivePort();
     compute(
         callRender,

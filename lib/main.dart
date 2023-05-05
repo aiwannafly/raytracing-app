@@ -5,8 +5,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 /*
   TODO:
-   - parallelize process of ray tracing
-   - add different quality levels of rendering
    - create fine testing data
    - speed up and optimize ray tracing
    - add quadrangles tracing

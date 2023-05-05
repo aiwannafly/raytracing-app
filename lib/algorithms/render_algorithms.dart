@@ -197,10 +197,10 @@ class RenderAlgorithms {
     var t1 = DateTime.now();
     int width = areaWidth.round();
     int height = areaHeight.round();
-    while (width % 8 != 0) {
+    while (width % 16 != 0) {
       width++;
     }
-    while (height % 8 != 0) {
+    while (height % 16 != 0) {
       height++;
     }
     BMPImage image = BMPImage(width: width, height: height);
@@ -224,6 +224,7 @@ class RenderAlgorithms {
         }
       }
     }
+
     for (int i = 0; i < xSplit; i++) {
       for (int j = 0; j < ySplit; j++) {
         var port = ReceivePort();
@@ -239,8 +240,8 @@ class RenderAlgorithms {
                 statusPort: port.sendPort));
         c.then(fillPart);
         tasks.add(c);
-        port.listen((message) {
-          count += sendFreq;
+        port.listen((partsCount) {
+          count += sendFreq * partsCount as int;
           statusPort.send(count);
         });
       }
@@ -253,7 +254,7 @@ class RenderAlgorithms {
     return image;
   }
 
-  Future<_TracePartRes> _traceImagePart(
+  Future<_TracePartRes> _traceImagePartNormal(
       {required RenderSettings settings,
       required Matrix invMatrix,
       required Scene scene,
@@ -261,6 +262,7 @@ class RenderAlgorithms {
       required IntPoint2D extent,
       required int sendFreq,
       required SendPort statusPort}) async {
+    assert(settings.quality == Quality.normal);
     BMPImage image = BMPImage(width: extent.x, height: extent.y);
     Point3D rStart = settings.eye;
     double z = settings.zNear;
@@ -283,12 +285,118 @@ class RenderAlgorithms {
           statusPort.send(1);
         }
         if (trace == null) {
+          image.setRGB(
+              x: x - offset.x, y: y - offset.y, color: settings.backColor);
           continue;
         }
         trace.light ^= 1 / settings.gamma;
         trace.light *= 255;
         image.setRGB(
             x: x - offset.x, y: y - offset.y, color: trace.light.toRGB());
+      }
+    }
+    return _TracePartRes(image: image, offset: offset, extent: extent);
+  }
+
+  Future<_TracePartRes> _traceImagePartRough(
+      {required RenderSettings settings,
+      required Matrix invMatrix,
+      required Scene scene,
+      required IntPoint2D offset,
+      required IntPoint2D extent,
+      required int sendFreq,
+      required SendPort statusPort}) async {
+    assert(settings.quality == Quality.rough);
+    BMPImage image = BMPImage(width: extent.x, height: extent.y);
+    Point3D rStart = settings.eye;
+    double z = settings.zNear;
+    int count = 0;
+    const step = 2;
+    for (int y = offset.y; y < extent.y + offset.y; y += step) {
+      for (int x = offset.x; x < extent.x + offset.x; x += step) {
+        Point3D scenePoint =
+            T3D().apply(Point3D(x + step / 2, y + step / 2, z), invMatrix);
+        Point3D rDir = scenePoint - rStart;
+        rDir /= rDir.norm();
+        _Trace? trace = _traceRay(
+            rStart: rStart,
+            rDir: rDir,
+            settings: settings,
+            scene: scene,
+            depth: settings.depth);
+        count++;
+        if (count == sendFreq) {
+          count = 0;
+          statusPort.send(step * step);
+        }
+        void setRoughPixel(RGB color) {
+          for (int i = y; i < y + step; i++) {
+            for (int j = x; j < x + step; j++) {
+              image.setRGB(x: j - offset.x, y: i - offset.y, color: color);
+            }
+          }
+        }
+
+        if (trace == null) {
+          setRoughPixel(settings.backColor);
+          continue;
+        }
+        trace.light ^= 1 / settings.gamma;
+        trace.light *= 255;
+        setRoughPixel(trace.light.toRGB());
+      }
+    }
+    return _TracePartRes(image: image, offset: offset, extent: extent);
+  }
+
+  Future<_TracePartRes> _traceImagePartFine(
+      {required RenderSettings settings,
+      required Matrix invMatrix,
+      required Scene scene,
+      required IntPoint2D offset,
+      required IntPoint2D extent,
+      required int sendFreq,
+      required SendPort statusPort}) async {
+    assert(settings.quality == Quality.fine);
+    BMPImage image = BMPImage(width: extent.x, height: extent.y);
+    Point3D rStart = settings.eye;
+    double z = settings.zNear;
+    int count = 0;
+    const step = 2;
+    RGBD backRGBD = RGBD(settings.backColor.red / 255,
+        settings.backColor.green / 255, settings.backColor.blue / 255);
+    for (int y = offset.y; y < extent.y + offset.y; y++) {
+      for (int x = offset.x; x < extent.x + offset.x; x++) {
+        RGBD full = RGBD(0, 0, 0);
+        for (int i = 0; i < step; i++) {
+          for (int j = 0; j < step; j++) {
+            Point3D scenePoint = T3D().apply(
+                Point3D(x.toDouble() + j, y.toDouble() + i, z), invMatrix);
+            Point3D rDir = scenePoint - rStart;
+            rDir /= rDir.norm();
+            _Trace? trace = _traceRay(
+                rStart: rStart,
+                rDir: rDir,
+                settings: settings,
+                scene: scene,
+                depth: settings.depth);
+            if (trace == null) {
+              full += backRGBD;
+            } else {
+              full += trace.light;
+            }
+          }
+        }
+        full /= (step * step);
+        full ^= 1 / settings.gamma;
+        full *= 255;
+        image.setRGB(
+            x: x - offset.x, y: y - offset.y, color: full.toRGB());
+        count++;
+        if (count == sendFreq) {
+          count = 0;
+          statusPort.send(1);
+        }
       }
     }
     return _TracePartRes(image: image, offset: offset, extent: extent);
@@ -324,7 +432,27 @@ class _TracePartArgs {
 }
 
 Future<_TracePartRes> _callTracePart(_TracePartArgs a) async {
-  return await RenderAlgorithms()._traceImagePart(
+  if (a.settings.quality == Quality.rough) {
+    return await RenderAlgorithms()._traceImagePartRough(
+        settings: a.settings,
+        invMatrix: a.invMatrix,
+        scene: a.scene,
+        offset: a.offset,
+        extent: a.extent,
+        sendFreq: a.sendFreq,
+        statusPort: a.statusPort);
+  }
+  if (a.settings.quality == Quality.fine) {
+    return await RenderAlgorithms()._traceImagePartFine(
+        settings: a.settings,
+        invMatrix: a.invMatrix,
+        scene: a.scene,
+        offset: a.offset,
+        extent: a.extent,
+        sendFreq: a.sendFreq,
+        statusPort: a.statusPort);
+  }
+  return await RenderAlgorithms()._traceImagePartNormal(
       settings: a.settings,
       invMatrix: a.invMatrix,
       scene: a.scene,

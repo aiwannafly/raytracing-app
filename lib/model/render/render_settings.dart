@@ -20,7 +20,7 @@ extension on Quality {
 }
 
 class RenderSettings {
-  RGB backgroundColor;
+  RGB backColor;
   double gamma;
   int depth;
   Quality quality;
@@ -54,7 +54,7 @@ class RenderSettings {
   }
 
   RenderSettings(
-      {required this.backgroundColor,
+      {required this.backColor,
       required this.gamma,
       required this.depth,
       required this.quality,
@@ -71,7 +71,7 @@ class RenderSettings {
       {required Scene scene,
       required this.quality,
       required this.depth,
-      required this.backgroundColor,
+      required this.backColor,
       required this.gamma,
       required double desiredWidth,
       required double desiredHeight}) {

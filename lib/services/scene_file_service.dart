@@ -26,7 +26,7 @@ class SceneFileService {
     String path = "$result.render";
     File file = await File(path).create();
     List<String> lines = [];
-    lines.add('${settings.backgroundColor}');
+    lines.add('${settings.backColor}');
     lines.add('${settings.gamma}');
     lines.add('${settings.depth}');
     lines.add(settings.quality.name);
@@ -86,7 +86,7 @@ class SceneFileService {
     up = right.vectorMul(dir);
     up /= up.norm();
     return RenderSettings(
-        backgroundColor: backgroundColor,
+        backColor: backgroundColor,
         gamma: gamma,
         depth: depth,
         quality: quality,
