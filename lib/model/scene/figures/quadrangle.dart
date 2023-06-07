@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:icg_raytracing/algorithms/types.dart';
 import 'package:icg_raytracing/model/scene/figures/plane.dart';
+import 'package:icg_raytracing/model/scene/figures/triangle.dart';
 
 import 'figure.dart';
 
@@ -10,7 +11,8 @@ class Quadrangle extends Figure {
   Point3D second;
   Point3D third;
   Point3D fourth;
-  late Plane plane;
+  late Triangle t1;
+  late Triangle t2;
 
   Quadrangle(
       {required this.first,
@@ -34,7 +36,13 @@ class Quadrangle extends Figure {
       Section(third, fourth),
       Section(fourth, first)
     ]));
-    plane = Plane.fromDots(first, second, third);
+    t1 = Triangle(first: first, second: second, third: third, optics: optics);
+    t2 = Triangle(first: first, second: third, third: fourth, optics: optics);
+  }
+
+  @override
+  String toString() {
+    return 'QUADRANGLE $first\n$second\n$third\n$fourth\n$optics';
   }
 
   @override
@@ -44,25 +52,16 @@ class Quadrangle extends Figure {
     second -= delta;
     third -= delta;
     fourth -= delta;
-    plane = Plane.fromDots(first, second, third);
+    t1 = Triangle(first: first, second: second, third: third, optics: optics);
+    t2 = Triangle(first: first, second: third, third: fourth, optics: optics);
   }
 
   @override
   Intersection? intersect({required Point3D rayStart, required Point3D rayDir}) {
-    return null;
-    // double? t = plane.intersect(rayStart: rayStart, rayDir: rayDir);
-    // if (t == null) {
-    //   return null;
-    // }
-    // Point3D pos = rayStart + rayDir * t;
-    // bool inside = pos >= minPos && pos <= maxPos;
-    // if (!inside) {
-    //   return null;
-    // }
-    // Point3D normal = plane.normal;
-    // if (rayDir.scalarDot(normal) >= 0) {
-    //   normal = -normal;
-    // }
-    // return Intersection(pos: pos, normal: normal);
+    var i1 = t1.intersect(rayStart: rayStart, rayDir: rayDir);
+    if (i1 != null) {
+      return i1;
+    }
+    return t2.intersect(rayStart: rayStart, rayDir: rayDir);
   }
 }

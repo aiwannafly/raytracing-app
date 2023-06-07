@@ -10,11 +10,11 @@ class Plane {
     Point3D dir1 = p1 - p2;
     Point3D dir2 = p3 - p2;
     if (dir1.isZero() || dir2.isZero()) {
-      throw "p1, p2, p3 don't make a plane";
+      throw "$p1, $p2, $p3 don't make a plane";
     }
     Point3D normal = dir1.vectorMul(dir2);
     if (normal.isZero()) {
-      throw "p1, p2, p3 don't make a plane";
+      throw "$p1, $p2, $p3 don't make a plane";
     }
     this.normal = normal / normal.norm();
     // print(p1);

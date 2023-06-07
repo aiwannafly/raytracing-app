@@ -12,18 +12,21 @@ enum Quality { rough, normal, fine }
 extension on Quality {
   String get name {
     switch (this) {
-      case Quality.rough: return "Rough";
-      case Quality.normal: return "Normal";
-      case Quality.fine: return "Fine";
+      case Quality.rough:
+        return "Rough";
+      case Quality.normal:
+        return "Normal";
+      case Quality.fine:
+        return "Fine";
     }
   }
 }
 
 class RenderSettings {
-  RGB backColor;
-  double gamma;
-  int depth;
-  Quality quality;
+  late RGB backColor;
+  late double gamma;
+  late int depth;
+  late Quality quality;
 
   late Point3D eye;
   late Point3D view;
@@ -64,8 +67,7 @@ class RenderSettings {
       required this.zNear,
       required this.zFar,
       required this.planeWidth,
-      required this.planeHeight}) {
-  }
+      required this.planeHeight}) {}
 
   RenderSettings.fromScene(
       {required Scene scene,
@@ -107,15 +109,50 @@ class RenderSettings {
     eye.x -= overallSizes!.x;
     zNear = (minPos.x - eye.x) / 2;
     zFar = maxPos.x - eye.x + overallSizes!.x / 2;
-    planeHeight = max(overallSizes!.y, overallSizes!.x * (desiredHeight) / desiredWidth);
+    planeHeight =
+        max(overallSizes!.y, overallSizes!.x * (desiredHeight) / desiredWidth);
     planeWidth = planeHeight * (desiredWidth / desiredHeight);
-    for (Figure f in scene.figures) {
-      minPos.x = min(minPos.x, f.minPos.x);
-      minPos.y = min(minPos.y, f.minPos.y);
-      minPos.z = min(minPos.z, f.minPos.z);
-      maxPos.x = max(maxPos.x, f.maxPos.x);
-      maxPos.y = max(maxPos.y, f.maxPos.y);
-      maxPos.z = max(maxPos.z, f.maxPos.z);
+  }
+
+  RenderSettings.fromExisting(
+      {required RenderSettings settings,
+      required double desiredWidth,
+      required double desiredHeight,
+      required Scene scene}) {
+    backColor = settings.backColor;
+    depth = settings.depth;
+    quality = settings.quality;
+    eye = settings.eye;
+    view = settings.view;
+    up = settings.up;
+    zNear = settings.zNear;
+    zFar = settings.zFar;
+    gamma = settings.gamma;
+
+    Point3D minPos = scene.figures.first.minPos;
+    Point3D maxPos = scene.figures.first.maxPos;
+    for (Figure object in scene.figures) {
+      minPos.x = min(minPos.x, object.minPos.x);
+      minPos.y = min(minPos.y, object.minPos.y);
+      minPos.z = min(minPos.z, object.minPos.z);
+      maxPos.x = max(maxPos.x, object.maxPos.x);
+      maxPos.y = max(maxPos.y, object.maxPos.y);
+      maxPos.z = max(maxPos.z, object.maxPos.z);
     }
+    overallSizes = (maxPos - minPos) * (1 + overallBoxExpand);
+    Point3D shift = (minPos + maxPos) / 2;
+    for (Figure figure in scene.figures) {
+      figure.shift(shift);
+      minPos.x = min(minPos.x, figure.minPos.x);
+      minPos.y = min(minPos.y, figure.minPos.y);
+      minPos.z = min(minPos.z, figure.minPos.z);
+    }
+    maxPos = -minPos;
+    for (LightSource l in scene.lightSources) {
+      l.pos -= shift;
+    }
+    planeHeight =
+        max(overallSizes!.y, overallSizes!.x * (desiredHeight) / desiredWidth);
+    planeWidth = planeHeight * (desiredWidth / desiredHeight);
   }
 }

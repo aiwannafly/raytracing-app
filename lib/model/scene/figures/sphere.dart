@@ -82,6 +82,11 @@ class Sphere extends Figure {
   }
 
   @override
+  String toString() {
+    return 'SPHERE $center\n$radius\n$optics';
+  }
+
+  @override
   Intersection? intersect({required Point3D rayStart, required Point3D rayDir}) {
     var oc = center - rayStart;
     double oc2 = oc.scalarDot(oc);

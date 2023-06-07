@@ -33,6 +33,11 @@ class Box extends Figure {
   }
 
   @override
+  String toString() {
+    return 'BOX $minPos\n$maxPos\n$optics';
+  }
+
+  @override
   void shift(Point3D delta) {
     super.shift(delta);
     for (int i = 0; i < points.length; i++) {

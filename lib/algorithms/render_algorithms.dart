@@ -172,9 +172,6 @@ class RenderAlgorithms {
     if (depth > 0) {
       rDir = -rDir;
       var cosO = int.normal.scalarDot(rDir);
-      if (cosO <= 0) {
-        return _Trace(light: light, dist: closest.dist);
-      }
       Point3D reflectedDir = int.normal * 2 * cosO - rDir;
       var rTrace = _traceRay(
           rStart: int.pos + reflectedDir * epsilon,
@@ -185,9 +182,12 @@ class RenderAlgorithms {
       if (rTrace == null) {
         return _Trace(light: light, dist: closest.dist);
       }
-      var fade = 1 / (rTrace.dist + 1);
-      var s = figure.optics.sight * fade;
-      light *= (1 - fade);
+      // var fade = 1 / (rTrace.dist + 1);
+      var s = figure.optics.sight;
+      // light *= (1 - fade);
+      light.red *= (1 - s.x);
+      light.green *= (1 - s.y);
+      light.blue *= (1 - s.z);
       light += RGBD(rTrace.light.red * s.x, rTrace.light.green * s.y,
           rTrace.light.blue * s.z);
     }

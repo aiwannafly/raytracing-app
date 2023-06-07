@@ -6,6 +6,11 @@ class Optics {
   int power;
 
   Optics({required this.diff, required this.sight, required this.power});
+
+  @override
+  String toString() {
+    return '$diff $sight $power';
+  }
 }
 
 class Intersection {

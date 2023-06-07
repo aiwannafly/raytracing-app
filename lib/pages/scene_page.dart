@@ -216,27 +216,32 @@ class _ScenePageState extends State<ScenePage> {
           ),
         ),
         hasScene
-            ? MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onPanDown: onPressed,
-              onPanUpdate: onDragged,
-              child: ClipRRect(
-                  child: FittedBox(
-                    child: CustomPaint(
-                      size: Size(width, height),
-                      painter:
-                      WireScenePainter(sections: transformedSections()),
-                    ),
+            ? Visibility(
+              visible: image == null,
+              child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onPanDown: onPressed,
+                    onPanUpdate: onDragged,
+                    child: ClipRRect(
+                        child: FittedBox(
+                      child: CustomPaint(
+                        size: Size(width, height),
+                        painter:
+                            WireScenePainter(sections: transformedSections()),
+                      ),
+                    )),
                   )),
-            ))
+            )
             : const SizedBox(),
         image != null
             ? Center(
-          child: ClipRRect(
-              borderRadius: Config.borderRadius,
-              child: Image.memory(image!.bytes,)),
-        )
+                child: ClipRRect(
+                    borderRadius: Config.borderRadius,
+                    child: Image.memory(
+                      image!.bytes,
+                    )),
+              )
             : const SizedBox(),
         Visibility(
             visible: currentTrace.value > 0,
@@ -271,8 +276,7 @@ class _ScenePageState extends State<ScenePage> {
     }
     RenderSettings? newSettings;
     try {
-      newSettings =
-      await SceneFileService().openSettingsFile();
+      newSettings = await SceneFileService().openSettingsFile();
     } catch (e) {
       ServiceIO.showMessage("Failed to load settings: $e", context);
       return;
@@ -306,7 +310,7 @@ class _ScenePageState extends State<ScenePage> {
   }
 
   void openScene() async {
-    Scene? res;
+    OpenSceneResult? res;
     try {
       res = await SceneFileService().openSceneFile();
     } catch (e) {
@@ -315,22 +319,30 @@ class _ScenePageState extends State<ScenePage> {
     if (res == null) {
       return;
     }
-    scene = res;
-    setState(() {
-      image = null;
-      hasScene = true;
-      selectViewActive.value = false;
+    scene = res.scene;
+    if (res.settings == null) {
       settings = RenderSettings.fromScene(
           scene: scene,
           quality: Quality.normal,
           depth: 3,
           backColor: RGB(230, 230, 230),
           gamma: 1,
-          desiredWidth: ScenePage.areaWidth(context),
-          desiredHeight: ScenePage.areaHeight(context));
+          desiredWidth: width,
+          desiredHeight: height);
       // a little rotation
       settings.eye =
           T3D().apply(settings.eye, T3D().getRotationMatrixZ(pi / 180));
+    } else {
+      settings = RenderSettings.fromExisting(
+          settings: res.settings!,
+          desiredWidth: width,
+          desiredHeight: height,
+          scene: scene);
+    }
+    setState(() {
+      image = null;
+      hasScene = true;
+      selectViewActive.value = false;
       zNear = settings.zNear;
     });
   }
@@ -369,13 +381,13 @@ class _ScenePageState extends State<ScenePage> {
     pixelsCount = w * h;
     var receivePort = ReceivePort();
     compute(
-        callRender,
-        RenderData(
-            scene: scene,
-            settings: settings,
-            width: width,
-            height: height,
-            sendPort: receivePort.sendPort))
+            callRender,
+            RenderData(
+                scene: scene,
+                settings: settings,
+                width: width,
+                height: height,
+                sendPort: receivePort.sendPort))
         .then((res) {
       image = res;
       setState(() {

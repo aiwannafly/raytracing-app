@@ -37,6 +37,11 @@ class Triangle extends Figure {
   }
 
   @override
+  String toString() {
+    return 'QUADRANGLE $first\n$second\n$third\n$optics';
+  }
+
+  @override
   Intersection? intersect({required Point3D rayStart, required Point3D rayDir}) {
     double? t = plane.intersect(rayStart: rayStart, rayDir: rayDir);
     if (t == null) {
